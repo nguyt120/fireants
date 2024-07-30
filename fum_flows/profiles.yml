@@ -1,0 +1,13 @@
+fum_flows:
+  outputs:
+    dev:
+      dataset: pd_cosmos_analytics_fireant
+      job_execution_timeout_seconds: 300
+      job_retries: 1
+      location: australia-southeast1
+      method: oauth
+      priority: interactive
+      project: anz-x-cosmos-prod-expt-3e0729
+      threads: 8
+      type: bigquery
+  target: dev
