@@ -14,7 +14,7 @@
 */
 
 
-{{ config(materialized='table') }}
+{{ config(materialized='table', alias=var('branch')) }}
 
 SELECT 1 id, 'John Doe' name, 'john.doe@gmail.com' email, '123 Fake Street, Sydney, NSW, 2000' address UNION ALL
 SELECT 2 id, 'Jane Smith' name, 'jane.smith@gmail.com' email, '123 Fake Street, Melbourne, VIC, 3000' address  UNION ALL
