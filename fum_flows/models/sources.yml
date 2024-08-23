@@ -1,0 +1,22 @@
+---
+version: 2
+sources:
+  # To use source data from other datasets within the same BQ project, you can use the following config setting as an example.
+  # This configuration demonstrates sourcing data from a dataset called `meshx_seed_v1`.
+  # Once a source has been defined, it can be referenced from a model using the source() function.
+  # To see an implementation example, refer to the `cloud_events_source_view.sql` model, which contains the code illustrating the usage of the `source()` function.
+  - name: dragonfish_transaction_v1
+    database: |
+      {%- if  target.name == "dev" -%} anz-x-cosmos-prod-ccc3bd
+      {%- else -%} invalid_database
+      {%- endif -%}
+    schema: dragonfish_transaction_v1
+    tables:
+      - name: core_transaction_anz_classic
+        description: This table has basic information about transaction for classic
+      - name: feature_transaction_anz_classic
+        description: This table has additional information about transaction for classic
+      - name: core_transaction_anz_plus
+        description: This table has basic information about transaction for plus
+      - name: feature_transaction_anz_plus
+        description: This table has additional information about transaction for plus

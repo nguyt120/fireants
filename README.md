@@ -7,5 +7,5 @@ Try running the following commands:
 - source venv/bin/activate
 - pip3 install -r requirements.txt
 - cd fum_flows
-- dbt run
-- dbt test
+- gcloud auth login --update-adc
+- sh dbt_run_local.sh {sql_file_name}.sql
