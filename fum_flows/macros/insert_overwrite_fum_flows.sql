@@ -83,7 +83,7 @@
 
 {% macro get_filter(relation) %}
     {% if is_incremental() %}
-        {%- set sql_statement = 'select Max(transaction_date) from {}'.format(this) -%}   
+        {%- set sql_statement = 'select Max(last_updated_date) from {}'.format(this) -%}   
         {%- set result = run_query(sql_statement).columns[0].values()[0] -%}
         transaction_date in ( select distinct transaction_date from {{ relation }} where last_updated_date >= date('{{ result }}'))
     {% endif %}
