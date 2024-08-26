@@ -188,6 +188,7 @@ fum_flow_whole_bank_not_aggregated AS (
         all_retail_mfi_flag
     FROM stg_transaction_whole_bank twb
     JOIN stg_deposit_account_customer dac ON twb.src_account_number = dac.account_number
+     AND twb.src_product_code = dac.product_code AND twb.src_sub_product_code = dac.sub_product_code
     JOIN stg_bsb_fi_interest_rate src_ofi ON twb.src_bsb_number = src_ofi.bsb_number
     JOIN stg_bsb_fi_interest_rate dst_ofi ON twb.dst_bsb_number = dst_ofi.bsb_number
     -- WHERE last_update_date = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) -- Get transactions updated in D-1
@@ -286,5 +287,5 @@ SELECT
     deposit_withdrawal_transaction_count,
     deposit_withdrawal_transaction_amount,
     unidentified_transaction_count,
-    unidentified_transaction_amount,
+    unidentified_transaction_amount
 FROM fum_flow_whole_bank_aggregated
