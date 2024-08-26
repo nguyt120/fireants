@@ -12,11 +12,43 @@ sources:
       {%- endif -%}
     schema: dragonfish_transaction_v1
     tables:
-      - name: core_transaction_anz_classic
-        description: This table has basic information about transaction for classic
-      - name: feature_transaction_anz_classic
-        description: This table has additional information about transaction for classic
-      - name: core_transaction_anz_plus
-        description: This table has basic information about transaction for plus
-      - name: feature_transaction_anz_plus
-        description: This table has additional information about transaction for plus
+      - name: transaction_anz_classic
+      - name: transaction_feature_anz_classic
+      - name: transaction_anz_plus
+      - name: transaction_feature_anz_plus
+
+  - name: sirius_account_v1
+    database: |
+      {%- if  target.name == "dev" -%} anz-x-cosmos-prod-ccc3bd
+      {%- else -%} invalid_database
+      {%- endif -%}
+    schema: sirius_account_v1
+    tables:
+      - name: deposit_account_current
+    
+  - name: sirius_customer_v1
+    database: |
+      {%- if  target.name == "dev" -%} anz-x-cosmos-prod-ccc3bd
+      {%- else -%} invalid_database
+      {%- endif -%}
+    schema: sirius_customer_v1
+    tables:
+      - name: customer_to_account_current
+
+  - name: sirius_reporting
+    database: |
+      {%- if  target.name == "dev" -%} anz-x-cosmos-prod-ccc3bd
+      {%- else -%} invalid_database
+      {%- endif -%}
+    schema: sirius_reporting
+    tables:
+      - name: CUSTOMER_MFI_MONTHLY_SUMMARY
+  
+  - name: referencedata_anzx_rdm_entities_v1
+    database: |
+      {%- if  target.name == "dev" -%} anz-x-cosmos-prod-ccc3bd
+      {%- else -%} invalid_database
+      {%- endif -%}
+    schema: referencedata_anzx_rdm_entities_v1
+    tables:
+      - name: bsb_prdm_view
