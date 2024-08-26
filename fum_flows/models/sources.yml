@@ -13,9 +13,7 @@ sources:
     schema: dragonfish_transaction_v1
     tables:
       - name: transaction_anz_classic
-      - name: transaction_feature_anz_classic
       - name: transaction_anz_plus
-      - name: transaction_feature_anz_plus
 
   - name: sirius_account_v1
     database: |

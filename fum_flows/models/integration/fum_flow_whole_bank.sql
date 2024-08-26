@@ -244,53 +244,6 @@ fum_flow_whole_bank_aggregated AS (
 )
 
 SELECT
-    SHA256(
-    CAST(transaction_date AS STRING)
-    || "|" || flow_direction
-    || "|" || UPPER(TRIM(IFNULL(src_fi, "")))
-    || "|" || TRIM(IFNULL(src_product_code, ""))
-    || "|" || TRIM(IFNULL(src_sub_product_code, ""))
-    || "|" || TRIM(IFNULL(src_marketing_code, ""))
-    || "|" || TRIM(IFNULL(src_interest_rate, ""))
-    || "|" || TRIM(IFNULL(src_term, ""))
-    || "|" || UPPER(TRIM(IFNULL(dst_fi, "")))
-    || "|" || TRIM(IFNULL(dst_product_code, ""))
-    || "|" || TRIM(IFNULL(dst_sub_product_code, ""))
-    || "|" || TRIM(IFNULL(dst_marketing_code, ""))
-    || "|" || TRIM(IFNULL(dst_interest_rate, ""))
-    || "|" || TRIM(IFNULL(dst_term, ""))
-    ) row_key,
-    SHA256(
-    CAST(total_amount AS STRING)
-    || "|" || CAST(mfi_transaction_count AS STRING)
-    || "|" || CAST(mfi_transaction_amount AS STRING)
-    || "|" || CAST(direct_debit_transaction_count AS STRING)
-    || "|" || CAST(direct_debit_transaction_amount AS STRING)
-    || "|" || CAST(bpay_transaction_count AS STRING)
-    || "|" || CAST(bpay_transaction_amount AS STRING)
-    || "|" || CAST(salary_transaction_count AS STRING)
-    || "|" || CAST(salary_transaction_amount AS STRING)
-    || "|" || CAST(transfer_transaction_count AS STRING)
-    || "|" || CAST(transfer_transaction_amount AS STRING)
-    || "|" || CAST(payment_transaction_count AS STRING)
-    || "|" || CAST(payment_transaction_amount AS STRING)
-    || "|" || CAST(bsb_acc_num_transaction_count AS STRING)
-    || "|" || CAST(bsb_acc_num_transaction_amount AS STRING)
-    || "|" || CAST(card_transaction_count AS STRING)
-    || "|" || CAST(card_transaction_amount AS STRING)
-    || "|" || CAST(fee_transaction_count AS STRING)
-    || "|" || CAST(fee_transaction_amount AS STRING)
-    || "|" || CAST(payid_transaction_count AS STRING)
-    || "|" || CAST(payid_transaction_amount AS STRING)
-    || "|" || CAST(interest_transaction_count AS STRING)
-    || "|" || CAST(interest_transaction_count AS STRING)
-    || "|" || CAST(payto_transaction_count AS STRING)
-    || "|" || CAST(payto_transaction_amount AS STRING)
-    || "|" || CAST(deposit_withdrawal_transaction_count AS STRING)
-    || "|" || CAST(deposit_withdrawal_transaction_amount AS STRING)
-    || "|" || CAST(unidentified_transaction_count AS STRING)
-    || "|" || CAST(unidentified_transaction_amount AS STRING)
-    ) hash_diff,
     transaction_date,
     flow_direction,
     src_fi,
@@ -334,6 +287,4 @@ SELECT
     deposit_withdrawal_transaction_amount,
     unidentified_transaction_count,
     unidentified_transaction_amount,
-    CURRENT_TIMESTAMP() _insert_time,
-    CURRENT_TIMESTAMP() _update_time,
 FROM fum_flow_whole_bank_aggregated
