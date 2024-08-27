@@ -1,0 +1,52 @@
+---
+version: 2
+sources:
+  # To use source data from other datasets within the same BQ project, you can use the following config setting as an example.
+  # This configuration demonstrates sourcing data from a dataset called `meshx_seed_v1`.
+  # Once a source has been defined, it can be referenced from a model using the source() function.
+  # To see an implementation example, refer to the `cloud_events_source_view.sql` model, which contains the code illustrating the usage of the `source()` function.
+  - name: dragonfish_transaction_v1
+    database: |
+      {%- if  target.name == "dev" -%} anz-x-cosmos-prod-ccc3bd
+      {%- else -%} invalid_database
+      {%- endif -%}
+    schema: dragonfish_transaction_v1
+    tables:
+      - name: transaction_anz_classic
+      - name: transaction_anz_plus
+
+  - name: sirius_account_v1
+    database: |
+      {%- if  target.name == "dev" -%} anz-x-cosmos-prod-ccc3bd
+      {%- else -%} invalid_database
+      {%- endif -%}
+    schema: sirius_account_v1
+    tables:
+      - name: deposit_account_current
+    
+  - name: sirius_customer_v1
+    database: |
+      {%- if  target.name == "dev" -%} anz-x-cosmos-prod-ccc3bd
+      {%- else -%} invalid_database
+      {%- endif -%}
+    schema: sirius_customer_v1
+    tables:
+      - name: customer_to_account_current
+
+  - name: sirius_reporting
+    database: |
+      {%- if  target.name == "dev" -%} anz-x-cosmos-prod-ccc3bd
+      {%- else -%} invalid_database
+      {%- endif -%}
+    schema: sirius_reporting
+    tables:
+      - name: CUSTOMER_MFI_MONTHLY_SUMMARY
+  
+  - name: referencedata_anzx_rdm_entities_v1
+    database: |
+      {%- if  target.name == "dev" -%} anz-x-cosmos-prod-ccc3bd
+      {%- else -%} invalid_database
+      {%- endif -%}
+    schema: referencedata_anzx_rdm_entities_v1
+    tables:
+      - name: bsb_prdm_view
