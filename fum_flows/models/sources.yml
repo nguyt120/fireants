@@ -50,3 +50,12 @@ sources:
     schema: referencedata_anzx_rdm_entities_v1
     tables:
       - name: bsb_prdm_view
+
+  - name: T1_CAP_AUS_CFDL_VW
+    database: |
+      {%- if  target.name == "dev" -%} anz-data-dgcp-prd-6443dd
+      {%- else -%} invalid_database
+      {%- endif -%}
+    schema: T1_CAP_AUS_CFDL_VW
+    tables:
+      - name: CAPIDSAU_BTRCDA_01_CFDL_VW
