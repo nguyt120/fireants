@@ -12,45 +12,7 @@
 WITH
 -- Prepare transaction data
 raw_transaction AS (
-    SELECT
-        EXTRACT(DATE FROM transaction_datetime) transaction_date,
-        transaction_id,
-        COALESCE(transfer_puid, payment_puid, bpay_puid) transaction_puid,
-        "plus" transaction_src,
-        transaction_type,
-        transaction_status,
-        account_number src_account_number,
-        account_bsb src_bsb_number,
-        product_code src_product_code,
-        sub_product_code src_sub_product_code,
-        marketing_code src_marketing_code,
-        CAST(NULL AS STRING) src_term, -- No TD data yet
-        COALESCE(transfer_destination_account_number, payment_other_entity_account_number) dst_account_number,
-        COALESCE(transfer_destination_account_bsb, payment_other_entity_account_bsb) dst_bsb_number,
-        transaction_amount,
-        EXTRACT(DATE FROM last_update_time) last_update_date
-    FROM {{ source("dragonfish_transaction_v1", "transaction_anz_plus") }}
-
-    UNION ALL
-
-    SELECT
-        EXTRACT(DATE FROM transaction_datetime) transaction_date,
-        transaction_id,
-        COALESCE(transfer_puid, payment_puid, bpay_puid) transaction_puid,
-        "classic" transaction_src,
-        transaction_type,
-        transaction_status,
-        account_number src_account_number,
-        account_bsb src_bsb_number,
-        product_code src_product_code,
-        sub_product_code src_sub_product_code,
-        marketing_code src_marketing_code,
-        CAST(NULL AS STRING) src_term, -- No TD data yet
-        COALESCE(transfer_destination_account_number, payment_other_entity_account_number) dst_account_number,
-        COALESCE(transfer_destination_account_bsb, payment_other_entity_account_bsb) dst_bsb_number,
-        transaction_amount,
-        EXTRACT(DATE FROM last_update_time) last_update_date
-    FROM {{ source("dragonfish_transaction_v1", "transaction_anz_classic") }}
+    SELECT * FROM {{ ref("DragonFish_Transaction") }}
 ),
 
 valid_two_legs_puids AS (
@@ -82,7 +44,6 @@ mapping_transaction AS (
         ,map.src_marketing_code dst_marketing_code
         ,map.src_term dst_term
         ,org.transaction_amount
-        ,org.last_update_date
     FROM raw_transaction org
     INNER JOIN raw_transaction map USING (transaction_puid)
     WHERE org.transaction_puid IN (SELECT transaction_puid FROM valid_two_legs_puids)
@@ -110,7 +71,6 @@ no_mapping_transaction AS (
         ,CAST(NULL AS STRING)	dst_marketing_code
         ,CAST(NULL AS STRING)	dst_term
         ,transaction_amount
-        ,last_update_date
     FROM raw_transaction
     -- Since transaction_id can be duplicated between classic and plus
     WHERE CONCAT(transaction_id, transaction_src) NOT IN (SELECT CONCAT(transaction_id, transaction_src) FROM mapping_transaction)
@@ -120,6 +80,9 @@ stg_transaction_whole_bank AS (
     SELECT * FROM mapping_transaction
     UNION ALL
     SELECT * FROM no_mapping_transaction
+    -- add term deposit transactions
+    UNION ALL
+    SELECT * FROM {{ ref("TermDeposit_Transaction") }}
 ),
 
 -- Prepare customer & account data
@@ -191,7 +154,6 @@ fum_flow_whole_bank_not_aggregated AS (
      AND twb.src_product_code = dac.product_code AND twb.src_sub_product_code = dac.sub_product_code
     JOIN stg_bsb_fi_interest_rate src_ofi ON twb.src_bsb_number = src_ofi.bsb_number
     JOIN stg_bsb_fi_interest_rate dst_ofi ON twb.dst_bsb_number = dst_ofi.bsb_number
-    -- WHERE last_update_date = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) -- Get transactions updated in D-1
 ),
 
 -- Aggregate
