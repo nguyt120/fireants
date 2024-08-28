@@ -34,8 +34,10 @@ vars:
 # files using the `{{ config(...) }}` macro.
 models:
   fum_flows:
+    +dataset: analytics_fireant
     # Config indicated by + and applies to all files under models/example/
     stage:
       +materialized: view
     mart:
       +materialized: view
+      +dataset: fireant_reporting
