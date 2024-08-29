@@ -43,3 +43,5 @@ SELECT
     ,unidentified_transaction_count
     ,unidentified_transaction_amount
 FROM {{ ref("fum_flow_whole_bank") }}
+qualify
+    row_number() over (partition by row_key order by _insert_time DESC) = 1
