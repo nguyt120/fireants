@@ -131,24 +131,24 @@ stg_bsb_fi_interest_rate AS (
     FROM {{ source("referencedata_anzx_rdm_entities_v1", "bsb_prdm_view") }}
 ),
 
--- Joining together for aggregation
+-- Joining together for aggregation, apply some clean-up pre aggregation
 fum_flow_whole_bank_not_aggregated AS (
     SELECT
         transaction_date,
         transaction_type,
         CASE WHEN transaction_amount >= 0 THEN "IN" ELSE "OUT" END flow_direction,
-        src_ofi.fi_name src_fi,
-        src_product_code,
-        src_sub_product_code,
-        src_marketing_code,
-        src_ofi.interest_rate src_interest_rate,
-        src_term,
-        dst_ofi.fi_name dst_fi,
-        dst_product_code,
-        dst_sub_product_code,
-        dst_marketing_code,
-        dst_ofi.interest_rate dst_interest_rate,
-        dst_term,
+        IFNULL(src_ofi.fi_name, "") src_fi,
+        IFNULL(src_product_code, "") src_product_code,
+        IFNULL(src_sub_product_code, "") src_sub_product_code,
+        IFNULL(src_marketing_code, "") src_marketing_code,
+        IFNULL(src_ofi.interest_rate, "") src_interest_rate,
+        IFNULL(src_term, "") src_term,
+        IFNULL(dst_ofi.fi_name, "") dst_fi,
+        IFNULL(dst_product_code, "") dst_product_code,
+        IFNULL(dst_sub_product_code, "") dst_sub_product_code,
+        IFNULL(dst_marketing_code, "") dst_marketing_code,
+        IFNULL(dst_ofi.interest_rate, "") dst_interest_rate,
+        IFNULL(dst_term, "") dst_term,
         transaction_amount,
         all_retail_mfi_flag
     FROM stg_transaction_whole_bank twb
