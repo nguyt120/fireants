@@ -90,7 +90,6 @@ stg_transaction_whole_bank AS (
 -- Prepare customer & account data
 raw_deposit_account_customer AS (
     SELECT
-        CURRENT_DATE() snapshot_date,
         dac.account_number,
         dac.product_code,
         dac.sub_product_code,
@@ -106,12 +105,11 @@ raw_deposit_account_customer AS (
         -- All transactions on month M reference M-1's MFI flag
         AND DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 1 day) = cmms.summary_date
     WHERE ctac.legal_owner_indicator = 'Y'
-    GROUP BY 1, 2, 3, 4, 5
+    GROUP BY 1, 2, 3, 4
 ),
 
 stg_deposit_account_customer AS (
     SELECT
-        snapshot_date,
         account_number,
         product_code,
         sub_product_code,
