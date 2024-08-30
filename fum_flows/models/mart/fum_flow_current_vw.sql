@@ -42,4 +42,6 @@ SELECT
     ,deposit_withdrawal_transaction_amount
     ,unidentified_transaction_count
     ,unidentified_transaction_amount
-FROM {{ ref("fum_flow_whole_bank") }}
+FROM {{ ref("fum_flow") }}
+qualify
+    row_number() over (partition by row_key order by _insert_time DESC) = 1
