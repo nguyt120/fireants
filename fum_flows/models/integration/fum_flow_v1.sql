@@ -15,6 +15,7 @@ WITH
 -- Prepare transaction data
 raw_transaction AS (
     SELECT * FROM {{ ref("DragonFish_Transaction") }}
+    WHERE transaction_date <= date_sub(current_date(), interval 1 day)
 ),
 
 valid_two_legs_puids AS (
