@@ -90,7 +90,6 @@ stg_transaction_whole_bank AS (
 -- Prepare customer & account data
 raw_deposit_account_customer AS (
     SELECT
-        CURRENT_DATE() snapshot_date,
         dac.account_number,
         dac.product_code,
         dac.sub_product_code,
@@ -106,12 +105,11 @@ raw_deposit_account_customer AS (
         -- All transactions on month M reference M-1's MFI flag
         AND DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 1 day) = cmms.summary_date
     WHERE ctac.legal_owner_indicator = 'Y'
-    GROUP BY 1, 2, 3, 4, 5
+    GROUP BY 1, 2, 3, 4
 ),
 
 stg_deposit_account_customer AS (
     SELECT
-        snapshot_date,
         account_number,
         product_code,
         sub_product_code,
@@ -131,24 +129,24 @@ stg_bsb_fi_interest_rate AS (
     FROM {{ source("referencedata_anzx_rdm_entities_v1", "bsb_prdm_view") }}
 ),
 
--- Joining together for aggregation
+-- Joining together for aggregation, apply some clean-up pre aggregation
 fum_flow_whole_bank_not_aggregated AS (
     SELECT
         transaction_date,
         transaction_type,
         CASE WHEN transaction_amount >= 0 THEN "IN" ELSE "OUT" END flow_direction,
-        src_ofi.fi_name src_fi,
-        src_product_code,
-        src_sub_product_code,
-        src_marketing_code,
-        src_ofi.interest_rate src_interest_rate,
-        src_term,
-        dst_ofi.fi_name dst_fi,
-        dst_product_code,
-        dst_sub_product_code,
-        dst_marketing_code,
-        dst_ofi.interest_rate dst_interest_rate,
-        dst_term,
+        NULLIF(src_ofi.fi_name, "") src_fi,
+        NULLIF(src_product_code, "") src_product_code,
+        NULLIF(src_sub_product_code, "") src_sub_product_code,
+        NULLIF(src_marketing_code, "") src_marketing_code,
+        NULLIF(src_ofi.interest_rate, "") src_interest_rate,
+        NULLIF(src_term, "") src_term,
+        NULLIF(dst_ofi.fi_name, "") dst_fi,
+        NULLIF(dst_product_code, "") dst_product_code,
+        NULLIF(dst_sub_product_code, "") dst_sub_product_code,
+        NULLIF(dst_marketing_code, "") dst_marketing_code,
+        NULLIF(dst_ofi.interest_rate, "") dst_interest_rate,
+        NULLIF(dst_term, "") dst_term,
         transaction_amount,
         all_retail_mfi_flag
     FROM stg_transaction_whole_bank twb

@@ -44,4 +44,4 @@ SELECT
     ,unidentified_transaction_amount
 FROM {{ ref("fum_flow") }}
 qualify
-    row_number() over (partition by row_key order by _insert_time) = 1
+    row_number() over (partition by row_key order by _insert_time ASC) = 1
