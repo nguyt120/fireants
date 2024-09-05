@@ -13,8 +13,8 @@ SELECT
     ,IFNULL(dst_marketing_code, "N/A") dst_marketing_code
     ,IFNULL(dst_interest_rate, "N/A") dst_interest_rate
     ,IFNULL(dst_term, "N/A") dst_term
-    ,all_retail_mfi_flag
     ,transaction_type
+    ,all_retail_mfi_flag
     ,transaction_amount
     ,transaction_count
 FROM {{ ref("fum_flow_v1") }}
