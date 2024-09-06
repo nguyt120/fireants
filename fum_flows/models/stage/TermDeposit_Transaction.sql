@@ -1,7 +1,7 @@
 WITH raw AS (
     SELECT
         PARSE_DATE('%Y%m%d', CAST(TXN_POST_DATE AS STRING)) AS transaction_date,
-        CASE TRAN_TYPE WHEN 'C' THEN 'Credit' WHEN 'D' THEN 'Debit' ELSE NULL END AS transaction_type,
+        CASE TRAN_TYPE WHEN 'C' THEN 'TD_CREDIT' WHEN 'D' THEN 'TD_DEBIT' ELSE NULL END AS transaction_type,
         FORMAT('%023d', CAST(HFR_ACCT_NUMBER AS INT64)) AS account_number, --Identifier used by CAP that the account is domiciled in Australia
         REPLACE(ACCT_BSB, '-', '') AS bsb_number , --Bank and Branch Identifier
         HOGAN_PROD AS product_code, --Identifies the account AS a Demand Deposit Account
@@ -15,8 +15,7 @@ SELECT
     ,CAST(NULL AS STRING)	transaction_id
     ,CAST(NULL AS STRING)	transaction_puid
     ,'Term Deposit' transaction_src
-    ,CASE WHEN transaction_type = "Debit" THEN "TD_DEBIT" 
-        WHEN transaction_type = "Credit" THEN "TD_CREDIT" END transaction_type
+    ,transaction_type
     ,CAST(NULL AS STRING)	transaction_status
     ,account_number src_account_number
     ,bsb_number src_bsb_number
