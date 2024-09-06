@@ -15,7 +15,8 @@ SELECT
     ,CAST(NULL AS STRING)	transaction_id
     ,CAST(NULL AS STRING)	transaction_puid
     ,'Term Deposit' transaction_src
-    ,transaction_type
+    ,CASE WHEN transaction_type = "Debit" THEN "TD_DEBIT" 
+        WHEN transaction_type = "Credit" THEN "TD_CREDIT" END transaction_type
     ,CAST(NULL AS STRING)	transaction_status
     ,account_number src_account_number
     ,bsb_number src_bsb_number
