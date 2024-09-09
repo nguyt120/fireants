@@ -10,7 +10,7 @@
     )
 }}
 
-{% set snapshot_source = ref("tn_testing_stg") %}
+{% set snapshot_source = ref("stg_fum_flow_v2") %}
 
 WITH
 
@@ -63,6 +63,7 @@ WITH
                 AND source.hash_diff <> current_target.hash_diff
             )
     ),
+
     insert_records AS (
         SELECT *, 1 AS _deleted_flg from insert_deleted_records
         UNION ALL
