@@ -1,3 +1,11 @@
+WITH 
+    last_deleted_time AS (
+        SELECT row_key, MAX(_insert_time) _last_deleted_time
+        FROM {{ ref("fum_flow_v2") }}
+        WHERE _deleted_flg = 1
+        GROUP BY row_key
+)
+
 SELECT
     transaction_date
     ,flow_direction
@@ -18,5 +26,7 @@ SELECT
     ,transaction_amount
     ,transaction_count
 FROM {{ ref("fum_flow_v2") }}
+LEFT JOIN last_deleted_time USING (row_key)
+WHERE _insert_time > COALESCE(_last_deleted_time, TIMESTAMP("1900-01-01"))
 qualify
     row_number() over (partition by row_key order by _insert_time ASC) = 1
