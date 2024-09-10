@@ -18,5 +18,6 @@ SELECT
     ,transaction_amount
     ,transaction_count
 FROM {{ ref("fum_flow_v2") }}
+WHERE _deleted_flg = 0
 qualify
     row_number() over (partition by row_key order by _insert_time DESC) = 1

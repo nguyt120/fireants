@@ -28,5 +28,6 @@ SELECT
 FROM {{ ref("fum_flow_v2") }}
 LEFT JOIN last_deleted_time USING (row_key)
 WHERE _insert_time > COALESCE(_last_deleted_time, TIMESTAMP("1900-01-01"))
+AND _deleted_flg = 0
 qualify
     row_number() over (partition by row_key order by _insert_time ASC) = 1
