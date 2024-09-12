@@ -1,6 +1,6 @@
 WITH raw AS (
     SELECT
-        PARSE_DATE('%Y%m%d', CAST(TXN_POST_DATE AS STRING)) AS transaction_date,
+        PARSE_DATETIME('%Y%m%d', CAST(TXN_POST_DATE AS STRING)) AS transaction_datetime,
         CASE TRAN_TYPE WHEN 'C' THEN 'TD_CREDIT' WHEN 'D' THEN 'TD_DEBIT' ELSE NULL END AS transaction_type,
         FORMAT('%023d', CAST(HFR_ACCT_NUMBER AS INT64)) AS account_number, --Identifier used by CAP that the account is domiciled in Australia
         REPLACE(ACCT_BSB, '-', '') AS bsb_number , --Bank and Branch Identifier
@@ -11,7 +11,7 @@ WITH raw AS (
     WHERE dl__rec_eff_to_ts = TIMESTAMP('9999-12-31 00:00:00 UTC')
 )
 SELECT
-    transaction_date
+    transaction_datetime
     ,CAST(NULL AS STRING)	transaction_id
     ,CAST(NULL AS STRING)	transaction_puid
     ,'Term Deposit' transaction_src
