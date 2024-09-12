@@ -4,7 +4,7 @@ WITH
 -- Prepare transaction data
 raw_transaction AS (
     SELECT * FROM {{ ref("DragonFish_Transaction") }}
-    WHERE transaction_date <= date_sub(current_date(), interval 1 day)
+    WHERE transaction_datetime <= DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY)
 ),
 
 valid_two_legs_puids AS (
@@ -17,7 +17,7 @@ valid_two_legs_puids AS (
 
 mapping_transaction AS (
     SELECT
-        org.transaction_date
+        org.transaction_datetime
         ,org.transaction_id
         ,org.transaction_puid
         ,org.transaction_src
@@ -44,7 +44,7 @@ mapping_transaction AS (
 
 no_mapping_transaction AS (
     SELECT
-        transaction_date
+        transaction_datetime
         ,transaction_id
         ,transaction_puid
         ,transaction_src
@@ -122,7 +122,7 @@ stg_bsb_fi_interest_rate AS (
 -- Joining together for aggregation, apply some clean-up pre aggregation
 fum_flow_whole_bank_not_aggregated AS (
     SELECT
-        transaction_date,
+        EXTRACT(DATE FROM transaction_datetime) transaction_date,
         transaction_type,
         CASE WHEN transaction_amount >= 0 THEN "IN" ELSE "OUT" END flow_direction,
         NULLIF(src_ofi.fi_name, "") src_fi,

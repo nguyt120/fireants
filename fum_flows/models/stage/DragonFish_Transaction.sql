@@ -1,5 +1,5 @@
 SELECT
-    EXTRACT(DATE FROM transaction_datetime) transaction_date,
+    transaction_datetime,
     transaction_id,
     COALESCE(transfer_puid, payment_puid, bpay_puid) transaction_puid,
     "plus" transaction_src,
@@ -19,7 +19,7 @@ FROM {{ source("dragonfish_transaction_v1", "transaction_anz_plus") }}
 UNION ALL
 
 SELECT
-    EXTRACT(DATE FROM transaction_datetime) transaction_date,
+    transaction_datetime,
     transaction_id,
     COALESCE(transfer_puid, payment_puid, bpay_puid) transaction_puid,
     "classic" transaction_src,
