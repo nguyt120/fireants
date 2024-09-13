@@ -15,7 +15,7 @@ reg_mapping as (
       WHEN DEAL_SUBTYPE LIKE '%V2%' THEN 'V2'
       ELSE DEAL_SUBTYPE
     END AS sub_product_code
-  from ref{{"reg_data_mapping"}}
+  from {{ ref("reg_data_mapping")}}
 ),
 
 reg_mapping_TPD as (
@@ -167,4 +167,4 @@ reg_mapping_union AS (
   SELECT DISTINCT * from reg_mapping_union_silver
 )
 
-Select * from reg_mapping_union;
+Select * from reg_mapping_union
