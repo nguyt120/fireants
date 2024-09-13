@@ -41,6 +41,7 @@ sources:
     schema: sirius_reporting
     tables:
       - name: CUSTOMER_MFI_MONTHLY_SUMMARY
+      - name: ACCOUNT_CURRENT_VW
   
   - name: referencedata_anzx_rdm_entities_v1
     database: |
@@ -60,4 +61,4 @@ sources:
     tables:
       - name: CAPIDSAU_BTRCDA_01_CFDL_VW
       - name: CAP_AU_HFRTDA_CFDL_VW
-      - name: HFRTDDAD_CFDL_VW`
+      - name: HFRTDDAD_CFDL_VW
