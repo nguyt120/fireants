@@ -19,4 +19,5 @@ bsb_cc_mapping AS (
   AND DATE(validation_date_from) <= dl__src_eff_to_dttm
 )
 
-SELECT * FROM 
+
+SELECT 1

@@ -1,3 +1,5 @@
+CREATE OR REPLACE TABLE `anz-x-cosmos-prod-expt-3e0729.pd_cosmos_fireant_reporting.nguyek42_reg_mapping_union`
+AS 
 WITH 
 reg_mapping AS (
   -- 8190 
@@ -56,10 +58,9 @@ reg_mapping_retail_dep as (
     rm.product_code,
     rm.sub_product_code,
     CASE
-      WHEN 
-      psgl_code = 'TD0001' and sub_product_code in ('AA', 'AB', 'AC', 'AD', 'AE', 'AG', 'AO', 'AR', 'AU') 
+      WHEN psgl_code = 'TD0001' and sub_product_code in ('AA', 'AB', 'AC', 'AD', 'AE', 'AG', 'AO', 'AR', 'AU') 
       THEN 'Retail'
-      
+
       WHEN psgl_code = 'TD0003' and sub_product_code in ('TA', 'TB', 'TC', 'TD', 'TE', 'TF', 'TG', 'TH', 'TI', 'TJ', 'TK', 'TL')  
       THEN 'Advance Notice TD - Retail'
 
@@ -146,6 +147,7 @@ reg_mapping_hl_offset as (
 reg_mapping_hl_nla as(
   -- filter for only homeloan | fum: net loans and advance
   -- product group: Variable, Unproductive, Fixed, Equity
+  -- count 771 distinct 771
   SELECT
     rm.fum,
     rm.bu,
@@ -164,6 +166,7 @@ reg_mapping_hl_nla as(
 ),
 
 reg_mapping_rt_lending_CC as(
+  -- count 44  distinct 24
   SELECT
     rm.fum,
     rm.bu,
@@ -183,6 +186,7 @@ reg_mapping_rt_lending_CC as(
  
 /* adding retail lending -  Personal Lending */
 reg_mapping_rt_lending_PL as(
+  -- count 55 distinct 53
   SELECT 
     rm.fum,
     rm.bu,
@@ -198,6 +202,48 @@ reg_mapping_rt_lending_PL as(
   AND BU = 'Personal Lending'
   AND FUM = 'Net loans and advances'
   AND division_name = 'Australia Retail Division'
+),
+
+reg_mapping_union_bronze AS(
+  SELECT * FROM reg_mapping_tdp
+  UNION ALL 
+  SELECT * FROM reg_mapping_retail_dep
+  UNION ALL
+  SELECT * FROM reg_mapping_hl_offset
+  UNION ALL 
+  SELECT * FROM reg_mapping_hl_nla
+  UNION ALL
+  SELECT * FROM reg_mapping_rt_lending_CC
+  UNION ALL 
+  SELECT  * FROM reg_mapping_rt_lending_PL
+),
+
+reg_mapping_union_silver AS (
+  SELECT 
+    rmu.fum,
+    rmu.bu,
+    rmu.division_name,
+    -- rmu.retail_mapping,
+    rmu.psgl_code,
+    rmu.cost_centre,
+    rmu.product_code,
+    rmu.sub_product_code,
+    rmu.product_group,
+    CASE
+      WHEN bu IN ('Consumer Cards', 'Personal Lending') THEN 'Cards and Payments'
+      WHEN product_group = 'Home Loans Offsets' THEN 'Home Loans Offsets'
+      WHEN bu IN ('HOME LOANS') THEN 'Home Loans'
+      ELSE Retail_Mapping
+    END AS portfolio
+  FROM reg_mapping_union_bronze rmu
+),
+
+reg_mapping_union_gold AS (
+  SELECT * EXCEPT(psgl_code) FROM reg_mapping_union_silver
+),
+
+reg_mapping_union AS (
+  SELECT DISTINCT * FROM reg_mapping_union_gold
 )
 
-SELECT DISTINCT product_group FROM reg_mapping_rt_lending_CC
+SELECT * FROM reg_mapping_union
