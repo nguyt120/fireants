@@ -27,7 +27,7 @@ reg_mapping AS (
       WHEN DEAL_SUBTYPE LIKE '%V2%' THEN 'V2'
       ELSE DEAL_SUBTYPE
     END AS sub_product_code
-  FROM `anz-x-cosmos-prod-expt-3e0729.pd_cosmos_fireant_reporting.reg_mapping_v2`
+  FROM {{ ref("reg_data_mapping") }}
 ),
 
 /*1. Retail Deposit - rd */
