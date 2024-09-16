@@ -95,7 +95,7 @@ stg_transaction_whole_bank_mapping as (
                                     and CAST(src.transaction_datetime AS DATETIME) >= ccm_cl.dl__src_eff_from_dttm 
                                     and CAST(src.transaction_datetime AS DATETIME) <= ccm_cl.dl__src_eff_to_dttm 
 
-        left JOIN {{ ref("Reg_data_mapping") }} rm_cl on  transaction_src = 'classic' 
+        left JOIN {{ ref("Reg_Data_Mapping") }} rm_cl on  transaction_src = 'classic' 
                                     and src.src_product_code = rm_cl.product_code
                                     and  src.src_sub_product_code = rm_cl.sub_product_code
                                     and cast(ccm_cl.cost_centre as string) = rm_cl.cost_centre 
@@ -104,7 +104,7 @@ stg_transaction_whole_bank_mapping as (
         left JOIN {{ ref("sr_marketing_code_mapping") }} smc on transaction_src = 'plus' 
                                     and smc.account_number = src.src_account_number
 
-        left JOIN {{ ref("Reg_data_mapping") }} rm_pl on transaction_src = 'plus' 
+        left JOIN {{ ref("Reg_Data_Mapping") }} rm_pl on transaction_src = 'plus' 
                                     and concat(src.src_sub_product_code, concat('|',smc.marketing_code)) = rm_pl.sub_product_code
                                     and cast(RIGHT(src.src_bsb_number,4) as string) = rm_pl.cost_centre
     WHERE transaction_src IN ('classic', 'plus')
@@ -119,7 +119,7 @@ stg_transaction_whole_bank_mapping as (
                                         and src_td.src_sub_product_code = ccm_td.sub_product_code
                                         and CAST(src_td.transaction_datetime AS DATETIME) >= ccm_td.dl__src_eff_from_dttm
                                         and CAST(src_td.transaction_datetime AS DATETIME) <= ccm_td.dl__src_eff_to_dttm 
-    left JOIN {{ ref("Reg_data_mapping") }} rm_td on  src_td.src_product_code = rm_td.product_code
+    left JOIN {{ ref("Reg_Data_Mapping") }} rm_td on  src_td.src_product_code = rm_td.product_code
                                     and  src_td.src_sub_product_code = rm_td.sub_product_code
                                     and cast(ccm_td.cost_centre as string) = rm_td.cost_centre
     WHERE transaction_src = 'Term Deposit'   
