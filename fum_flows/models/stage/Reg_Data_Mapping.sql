@@ -1,12 +1,24 @@
-WITH
-reg_mapping as (
-  select 
-    FUM as fum,
-    BU as bu,
-    DIVISION_NAME as division_name,
-    Retail_Mapping,
-    PSGL_PRODUCT_CODE as psgl_code,
-    LEFT(cast(PROFIT_CENTRE as string),4) as cost_centre,
+/*
+  1. Retail Deposit - rd 
+    1.1 Third Party Deposit (TD-TPD)
+    1.2 Term Deposit Retail + Advance notice TD
+    1.3 Home Loan Offset
+  2. Retail lending - rl 
+    2.1 Home Loans
+    2.2 Consumer Cards
+    2.3 Personal Lending
+  3. Reg mapping union
+*/
+
+WITH 
+reg_mapping AS (
+  SELECT 
+    FUM AS fum,
+    BU AS bu,
+    DIVISION_NAME AS division_name,
+    Retail_Mapping AS retail_mapping,
+    PSGL_PRODUCT_CODE AS psgl_code,
+    LEFT(CAST(PROFIT_CENTRE AS string),4) AS cost_centre,
     CASE
       WHEN DEAL_SUBTYPE LIKE '%V2%' THEN 'DDA'
       ELSE DEAL_TYPE
@@ -15,41 +27,45 @@ reg_mapping as (
       WHEN DEAL_SUBTYPE LIKE '%V2%' THEN 'V2'
       ELSE DEAL_SUBTYPE
     END AS sub_product_code
-  from {{ ref("reg_data_mapping")}}
+  FROM `anz-x-cosmos-prod-expt-3e0729.pd_cosmos_fireant_reporting.reg_mapping_v2`
 ),
 
-reg_mapping_TPD as (
-  select 
-    *,
+/*1. Retail Deposit - rd */
+--1.1 Third Party Deposit (TD-TPD)
+rm_rd_tpd as (
+  SELECT 
+    rm.fum,
+    rm.bu,
+    rm.division_name,
+    rm.retail_mapping,
+    rm.psgl_code,
+    rm.cost_centre,
+    rm.product_code,
+    rm.sub_product_code,
     'Third Party Deposits' as product_group
-  from reg_mapping
-  where cost_centre in ('3023','3798')
-  and BU = 'Banking Prod'
-  and FUM = 'Deposits and other borrowings'
-  and division_name = 'Australia Retail Division'
-  and Retail_Mapping in ('TD Portfolio')
+  FROM reg_mapping AS rm
+  WHERE 1=1
+  AND rm.bu = 'Banking Prod'
+  AND rm.fum = 'Deposits and other borrowings'
+  AND rm.cost_centre in ('3023','3798')
+  AND rm.division_name = 'Australia Retail Division'
+  AND rm.retail_mapping in ('TD Portfolio')
 ),
-
-reg_mapping_homeloan as (
-  select 
-    * EXCEPT(bu),
-    'Home Loans Offsets' as bu,
-    'Home Loans Offsets' as product_group
-  from reg_mapping
-  where cost_centre not in ('3023','3798')
-  and BU = 'HOME LOANS'
-  and FUM = 'Deposits and other borrowings'
-  and division_name = 'Australia Retail Division'
-),
-
-reg_mapping_retail_dep as (
-  select 
-    *,
+--1.2 Term Deposit Retail + Advance notice TD
+rm_rd_td_retail as (
+  SELECT 
+    rm.fum,
+    rm.bu,
+    rm.division_name,
+    rm.retail_mapping,
+    rm.psgl_code,
+    rm.cost_centre,
+    rm.product_code,
+    rm.sub_product_code,
     CASE
-      WHEN 
-      psgl_code = 'TD0001' and sub_product_code in ('AA', 'AB', 'AC', 'AD', 'AE', 'AG', 'AO', 'AR', 'AU') 
+      WHEN psgl_code = 'TD0001' and sub_product_code in ('AA', 'AB', 'AC', 'AD', 'AE', 'AG', 'AO', 'AR', 'AU') 
       THEN 'Retail'
-      
+
       WHEN psgl_code = 'TD0003' and sub_product_code in ('TA', 'TB', 'TC', 'TD', 'TE', 'TF', 'TG', 'TH', 'TI', 'TJ', 'TK', 'TL')  
       THEN 'Advance Notice TD - Retail'
 
@@ -100,71 +116,132 @@ reg_mapping_retail_dep as (
 
       ELSE 'Unknown'
     END AS product_group
-  from reg_mapping
-  where cost_centre not in ('3023','3798')
-  and BU = 'Banking Prod'
-  and FUM = 'Deposits and other borrowings'
-  and division_name = 'Australia Retail Division'
-  and Retail_Mapping in ('TD Portfolio','Savings Portfolio','Transaction Portfolio')
+  FROM reg_mapping rm
+  WHERE 1=1 
+  AND rm.cost_centre not in ('3023','3798')
+  AND rm.bu = 'Banking Prod'
+  AND rm.fum = 'Deposits and other borrowings'
+  AND rm.division_name = 'Australia Retail Division'
+  AND rm.retail_mapping in ('TD Portfolio','Savings Portfolio','Transaction Portfolio')
+),
+--1.3 Home Loan Offset
+rm_rd_homeloans_offset as (
+  SELECT 
+    rm.fum,
+    rm.bu,
+    rm.division_name,
+    rm.retail_mapping,
+    rm.psgl_code,
+    rm.cost_centre,
+    rm.product_code,
+    rm.sub_product_code,
+    'Home Loans Offsets' as product_group
+  FROM reg_mapping AS rm
+  WHERE 1=1
+  AND rm.cost_centre not in ('3023','3798')
+  AND rm.bu = 'HOME LOANS'
+  AND rm.fum = 'Deposits and other borrowings'
+  AND rm.division_name = 'Australia Retail Division'
 ),
 
-reg_mapping_rt_lending_HL as (
-  select
-    *,
-    Retail_Mapping as product_group
-  from reg_mapping
-  where 1=1
-  and BU = 'HOME LOANS'
-  and FUM = 'Net loans and advances'
-  and division_name = 'Australia Retail Division'
+/*2. Retail lending - rl */
+--2.1 Home Loans
+rm_rl_homeloans as(
+  SELECT
+    rm.fum,
+    rm.bu,
+    rm.division_name,
+    rm.retail_mapping,
+    rm.psgl_code,
+    rm.cost_centre,
+    rm.product_code,
+    rm.sub_product_code,
+    rm.retail_mapping as product_group -- Variable, Unproductive, Fixed, Equity
+  FROM reg_mapping rm
+  WHERE 1=1
+  AND rm.bu = 'HOME LOANS'
+  AND rm.fum = 'Net loans and advances'
+  AND rm.division_name = 'Australia Retail Division'
 ),
-/* adding retail lending - Consumer Cards
-Consumer Cards  4.821
-*/
-reg_mapping_rt_lending_CC as(
-  select *, BU  as product_group
-  from reg_mapping
-  where 1=1
-  and BU = 'Consumer Cards'
-  and FUM = 'Net loans and advances'
-  and division_name = 'Australia Retail Division'
+--2.2 Consumer Cards
+rm_rl_consumer_cards as(
+
+  SELECT
+    rm.fum,
+    rm.bu,
+    rm.division_name,
+    rm.retail_mapping,
+    rm.psgl_code,
+    rm.cost_centre,
+    rm.product_code,
+    rm.sub_product_code,
+    rm.bu  as product_group -- Consumer Cards
+  FROM reg_mapping rm
+  WHERE 1=1
+  AND BU = 'Consumer Cards'
+  AND FUM = 'Net loans and advances'
+  AND division_name = 'Australia Retail Division'
 ),
-/* adding retail lending -  Personal Lending
-*/
-reg_mapping_rt_lending_PL as(
-  select *, BU  as product_group
-  from reg_mapping
-    where 1=1
-    and BU = 'Personal Lending'
-    and FUM = 'Net loans and advances'
-    and division_name = 'Australia Retail Division'
+--2.3 Personal Lending
+rm_rl_personal_lending as(
+  SELECT 
+    rm.fum,
+    rm.bu,
+    rm.division_name,
+    rm.retail_mapping,
+    rm.psgl_code,
+    rm.cost_centre,
+    rm.product_code,
+    rm.sub_product_code,
+    rm.bu  as product_group -- Personal Lending
+  FROM reg_mapping rm
+  WHERE 1=1
+  AND BU = 'Personal Lending'
+  AND FUM = 'Net loans and advances'
+  AND division_name = 'Australia Retail Division'
 ),
-reg_mapping_union_broze AS (
-  SELECT * FROM reg_mapping_TPD
+
+/*3. Reg mapping union */
+reg_mapping_union_bronze AS(
+  SELECT * FROM rm_rd_tpd 
+  UNION ALL 
+  SELECT * FROM rm_rd_td_retail
   UNION ALL
-  SELECT * FROM reg_mapping_homeloan
+  SELECT * FROM rm_rd_homeloans_offset
+  UNION ALL 
+  SELECT * FROM rm_rl_homeloans
   UNION ALL
-  SELECT * FROM reg_mapping_retail_dep
-  UNION ALL
-  SELECT * FROM reg_mapping_rt_lending_HL
-  UNION ALL
-  SELECT * FROM reg_mapping_rt_lending_CC
-  UNION ALL
-  SELECT * FROM reg_mapping_rt_lending_PL
+  SELECT * FROM rm_rl_consumer_cards
+  UNION ALL 
+  SELECT  * FROM rm_rl_personal_lending
 ),
 
 reg_mapping_union_silver AS (
   SELECT 
-    * EXCEPT(Retail_Mapping),
+    rmu.fum,
+    rmu.bu,
+    rmu.division_name,
+    -- rmu.retail_mapping,
+    rmu.psgl_code,
+    rmu.cost_centre,
+    rmu.product_code,
+    rmu.sub_product_code,
+    rmu.product_group,
     CASE
-      WHEN bu IN ('Consumer Cards', 'HOME LOANS', 'Personal Lending', 'Home Loans Offsets') THEN bu
+      WHEN bu IN ('Consumer Cards', 'Personal Lending') THEN 'Cards and Payments'
+      WHEN product_group = 'Home Loans Offsets' THEN 'Home Loans Offsets'
+      WHEN bu IN ('HOME LOANS') THEN 'Home Loans'
       ELSE Retail_Mapping
-    END AS Retail_Mapping
-  FROM reg_mapping_union_broze
+    END AS portfolio
+  FROM reg_mapping_union_bronze rmu
+),
+
+reg_mapping_union_gold AS (
+  SELECT * EXCEPT(psgl_code) FROM reg_mapping_union_silver
 ),
 
 reg_mapping_union AS (
-  SELECT DISTINCT * from reg_mapping_union_silver
+  SELECT DISTINCT * FROM reg_mapping_union_gold
 )
 
-Select * from reg_mapping_union
+SELECT * FROM reg_mapping_union
