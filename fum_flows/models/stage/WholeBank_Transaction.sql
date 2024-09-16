@@ -75,54 +75,6 @@ stg_transaction_whole_bank as (
     -- add term deposit transactions
     UNION ALL
     SELECT * FROM {{ ref("TermDeposit_Transaction") }}
-),
--- Categorize trnx asset by product_group 
-stg_transaction_whole_bank_mapping as (
-    SELECT   
-        src.*,
-        case transaction_src 
-            when 'classic' then  rm_cl.Retail_Mapping 
-            when 'plus'    then  rm_pl.Retail_Mapping end as portfolio,
-        case transaction_src 
-            when 'classic' then  rm_cl.product_group 
-            when 'plus'    then  rm_pl.product_group end as product_group
-    FROM stg_transaction_whole_bank src
-    -- Get portfolio+product_group from Reg mapping by cost_centre
-        left JOIN {{ ref("bsb_cc_mapping_dda") }} ccm_cl on transaction_src = 'classic' 
-                                    and RIGHT(src.src_account_number,9) = ccm_cl.account_number 
-                                    and cast(RIGHT(src.src_bsb_number,4) as numeric) = ccm_cl.bsb 
-                                    and src.src_sub_product_code = ccm_cl.sub_product_code
-                                    and CAST(src.transaction_datetime AS DATETIME) >= ccm_cl.dl__src_eff_from_dttm 
-                                    and CAST(src.transaction_datetime AS DATETIME) <= ccm_cl.dl__src_eff_to_dttm 
-
-        left JOIN {{ ref("Reg_Data_Mapping") }} rm_cl on  transaction_src = 'classic' 
-                                    and src.src_product_code = rm_cl.product_code
-                                    and  src.src_sub_product_code = rm_cl.sub_product_code
-                                    and cast(ccm_cl.cost_centre as string) = rm_cl.cost_centre 
-
-    -- Get portfolio+product_group from Reg mapping by  mkt_code
-        left JOIN {{ ref("sr_marketing_code_mapping") }} smc on transaction_src = 'plus' 
-                                    and smc.account_number = src.src_account_number
-
-        left JOIN {{ ref("Reg_Data_Mapping") }} rm_pl on transaction_src = 'plus' 
-                                    and concat(src.src_sub_product_code, concat('|',smc.marketing_code)) = rm_pl.sub_product_code
-                                    and cast(RIGHT(src.src_bsb_number,4) as string) = rm_pl.cost_centre
-    WHERE transaction_src IN ('classic', 'plus')
--- TD - Term Deposit  CDA  
-    UNION ALL
-    SELECT src_td.*,
-            rm_td.Retail_Mapping,
-            rm_td.product_group,
-    FROM stg_transaction_whole_bank src_td
-    left JOIN {{ ref("bsb_cc_mapping_cda") }} ccm_td on CAST(SUBSTR(src_td.src_account_number, -9) AS NUMERIC) = ccm_td.account_number 
-                                        and cast(src_td.src_bsb_number AS NUMERIC) = ccm_td.bsb
-                                        and src_td.src_sub_product_code = ccm_td.sub_product_code
-                                        and CAST(src_td.transaction_datetime AS DATETIME) >= ccm_td.dl__src_eff_from_dttm
-                                        and CAST(src_td.transaction_datetime AS DATETIME) <= ccm_td.dl__src_eff_to_dttm 
-    left JOIN {{ ref("Reg_Data_Mapping") }} rm_td on  src_td.src_product_code = rm_td.product_code
-                                    and  src_td.src_sub_product_code = rm_td.sub_product_code
-                                    and cast(ccm_td.cost_centre as string) = rm_td.cost_centre
-    WHERE transaction_src = 'Term Deposit'   
 )
 
-SELECT * FROM stg_transaction_whole_bank_mapping
+SELECT * FROM stg_transaction_whole_bank
