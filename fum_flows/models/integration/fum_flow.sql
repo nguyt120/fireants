@@ -14,7 +14,7 @@
 WITH
 -- Prepare transaction data
 raw_transaction AS (
-    SELECT * FROM {{ ref("DragonFish_Transaction") }}
+    SELECT * FROM {{ ref("df_transaction") }}
 ),
 
 valid_two_legs_puids AS (
@@ -84,7 +84,7 @@ stg_transaction_whole_bank AS (
     SELECT * FROM no_mapping_transaction
     -- add term deposit transactions
     UNION ALL
-    SELECT * FROM {{ ref("TermDeposit_Transaction") }}
+    SELECT * FROM {{ ref("td_transaction") }}
 ),
 
 -- Prepare customer & account data

@@ -62,7 +62,7 @@ fum_flow_whole_bank_not_aggregated AS (
         NULLIF(dst_term, "") dst_term,
         transaction_amount,
         all_retail_mfi_flag
-    FROM {{ ref("WholeBank_Transaction") }} twb
+    FROM {{ ref("all_transaction") }} twb
     LEFT JOIN stg_deposit_account_customer dac ON twb.src_account_number = dac.account_number
      AND twb.src_product_code = dac.product_code AND twb.src_sub_product_code = dac.sub_product_code
     LEFT JOIN stg_bsb_fi_interest_rate src_ofi ON twb.src_bsb_number = src_ofi.bsb_number

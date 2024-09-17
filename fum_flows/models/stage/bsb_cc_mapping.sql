@@ -47,8 +47,8 @@ hl_acc AS (
         AND (X783679_PRDCT_CODE = 'ILS' AND X783679_ACT_STATUS IS NULL)
 )
 
-    SELECT * FROM dda_acc
-    UNION ALL 
-    SELECT * FROM cda_acc
-    UNION ALL 
-    SELECT * FROM hl_acc
+SELECT * FROM dda_acc
+UNION ALL 
+SELECT * FROM cda_acc
+UNION ALL 
+SELECT * FROM hl_acc

@@ -27,7 +27,7 @@ reg_mapping AS (
       WHEN DEAL_SUBTYPE LIKE '%V2%' THEN 'V2'
       ELSE DEAL_SUBTYPE
     END AS sub_product_code
-  FROM {{ ref("reg_data_mapping") }}
+  FROM {{ ref("seed_reg_data_mapping") }}
 ),
 
 /*1. Retail Deposit - rd */
