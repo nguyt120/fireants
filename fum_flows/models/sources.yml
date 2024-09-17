@@ -62,3 +62,4 @@ sources:
       - name: CAPIDSAU_BTRCDA_01_CFDL_VW
       - name: CAP_AU_HFRTDA_CFDL_VW
       - name: HFRTDDAD_CFDL_VW
+      - name: HFRLOANA_CFDL_VW

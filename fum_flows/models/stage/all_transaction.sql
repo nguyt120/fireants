@@ -75,7 +75,7 @@ no_mapping_transaction AS (
     FROM raw_df_transaction
     -- Since transaction_id can be duplicated between classic and plus
     WHERE CONCAT(transaction_id, transaction_src) NOT IN (SELECT CONCAT(transaction_id, transaction_src) FROM mapping_transaction)
-),
+)
 
 SELECT * FROM mapping_transaction
 UNION ALL

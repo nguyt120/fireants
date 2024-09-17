@@ -57,7 +57,7 @@ stg_bsb_fi_interest_rate AS (
 -- Joining together for aggregation, apply some clean-up pre aggregation
 fum_flow_whole_bank_not_aggregated AS (
     SELECT
-        transaction_date,
+        DATE(transaction_datetime) AS transaction_date,
         transaction_type,
         CASE WHEN transaction_amount >= 0 THEN "IN" ELSE "OUT" END flow_direction,
         NULLIF(src_ofi.fi_name, "") src_fi,

@@ -34,6 +34,7 @@ vars:
 # files using the `{{ config(...) }}` macro.
 models:
   fum_flows:
+    +tag: ['dbt-model']
     +dataset: analytics_fireant
     # Config indicated by + and applies to all files under models/example/
     stage:
@@ -44,3 +45,4 @@ models:
 seeds:
   fum_flows:
     +dataset: analytics_fireant
+    +tags: ['flat_file_upload']
