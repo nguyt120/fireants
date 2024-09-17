@@ -1,0 +1,3 @@
+transaction_datetime,transaction_id,transaction_puid,transaction_src,transaction_type,transaction_status,src_account_number,src_bsb_number,src_product_code,src_sub_product_code,src_marketing_code,src_term,dst_account_number,dst_bsb_number,dst_product_code,dst_sub_product_code,dst_marketing_code,dst_term,transaction_amount
+2023-05-04 00:00:00.000000 UTC,,,Term Deposit,TD_CREDIT,,00000000000000917240698,016281,CDA,TB,,,,,,,,,66000
+2023-05-04 00:00:00.000000 UTC,,,Term Deposit,TD_DEBIT,,00000000000000975351118,014272,CDA,AD,,,,,,,,,-14471.17
