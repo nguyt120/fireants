@@ -12,82 +12,6 @@
 }}
 
 WITH
--- Prepare transaction data
-raw_transaction AS (
-    SELECT * FROM {{ ref("df_transaction") }}
-    WHERE transaction_date <= date_sub(current_date(), interval 1 day)
-),
-
-valid_two_legs_puids AS (
-    SELECT DISTINCT transaction_puid, COUNT(transaction_puid) leg_count
-    FROM raw_transaction
-    WHERE dst_account_number IS NOT NULL
-    GROUP BY transaction_puid
-    HAVING leg_count = 2
-),
-
-mapping_transaction AS (
-    SELECT
-        org.transaction_date
-        ,org.transaction_id
-        ,org.transaction_puid
-        ,org.transaction_src
-        ,org.transaction_type
-        ,org.transaction_status
-        ,org.src_account_number
-        ,org.src_bsb_number
-        ,org.src_product_code
-        ,org.src_sub_product_code
-        ,org.src_marketing_code
-        ,org.src_term
-        ,map.src_account_number dst_account_number
-        ,map.src_bsb_number	dst_bsb_number
-        ,map.src_product_code	dst_product_code
-        ,map.src_sub_product_code	dst_sub_product_code
-        ,map.src_marketing_code dst_marketing_code
-        ,map.src_term dst_term
-        ,org.transaction_amount
-    FROM raw_transaction org
-    INNER JOIN raw_transaction map USING (transaction_puid)
-    WHERE org.transaction_puid IN (SELECT transaction_puid FROM valid_two_legs_puids)
-    AND org.src_account_number != map.src_account_number
-),
-
-no_mapping_transaction AS (
-    SELECT
-        transaction_date
-        ,transaction_id
-        ,transaction_puid
-        ,transaction_src
-        ,transaction_type
-        ,transaction_status
-        ,src_account_number
-        ,src_bsb_number
-        ,src_product_code
-        ,src_sub_product_code
-        ,src_marketing_code
-        ,src_term
-        ,dst_account_number
-        ,dst_bsb_number
-        ,CAST(NULL AS STRING)	dst_product_code
-        ,CAST(NULL AS STRING)	dst_sub_product_code
-        ,CAST(NULL AS STRING)	dst_marketing_code
-        ,CAST(NULL AS STRING)	dst_term
-        ,transaction_amount
-    FROM raw_transaction
-    -- Since transaction_id can be duplicated between classic and plus
-    WHERE CONCAT(transaction_id, transaction_src) NOT IN (SELECT CONCAT(transaction_id, transaction_src) FROM mapping_transaction)
-),
-
-stg_transaction_whole_bank AS (
-    SELECT * FROM mapping_transaction
-    UNION ALL
-    SELECT * FROM no_mapping_transaction
-    -- add term deposit transactions
-    UNION ALL
-    SELECT * FROM {{ ref("td_transaction") }}
-),
-
 -- Prepare customer & account data
 raw_deposit_account_customer AS (
     SELECT
@@ -150,7 +74,7 @@ fum_flow_whole_bank_not_aggregated AS (
         NULLIF(dst_term, "") dst_term,
         transaction_amount,
         all_retail_mfi_flag
-    FROM stg_transaction_whole_bank twb
+    FROM {{ ref("all_transaction") }} twb
     LEFT JOIN stg_deposit_account_customer dac ON twb.src_account_number = dac.account_number
      AND twb.src_product_code = dac.product_code AND twb.src_sub_product_code = dac.sub_product_code
     LEFT JOIN stg_bsb_fi_interest_rate src_ofi ON twb.src_bsb_number = src_ofi.bsb_number
