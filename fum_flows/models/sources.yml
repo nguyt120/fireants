@@ -63,3 +63,17 @@ sources:
       - name: CAP_AU_HFRTDA_CFDL_VW
       - name: HFRTDDAD_CFDL_VW
       - name: HFRLOANA_CFDL_VW
+    schema: T1_VPS_AUS_CFDL_VW
+    tables:
+      - name: VPS_AU_ATGT_S1_CFDL_VW
+      - name: VPS_AU_ATGT_S2_CFDL_VW
+      - name: VPS_AU_ATGT_S3_CFDL_VW
+      - name: VPS_AU_ATGT_S4_CFDL_VW
+      - name: VPS_AU_ATGT_S5_CFDL_VW
+      - name: VPS_AU_ATGT_S6_CFDL_VW
+      - name: VPS_AU_ATPT_S1_CFDL_VW
+      - name: VPS_AU_ATPT_S2_CFDL_VW
+      - name: VPS_AU_ATPT_S3_CFDL_VW
+      - name: VPS_AU_ATPT_S4_CFDL_VW
+      - name: VPS_AU_ATPT_S5_CFDL_VW
+      - name: VPS_AU_ATPT_S6_CFDL_VW
