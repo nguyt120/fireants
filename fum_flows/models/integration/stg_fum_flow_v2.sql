@@ -45,26 +45,27 @@ stg_bsb_fi_interest_rate AS (
 -- Joining together for aggregation, apply some clean-up pre aggregation
 fum_flow_whole_bank_not_aggregated AS (
     SELECT
-        EXTRACT(DATE FROM transaction_datetime) transaction_date,
+        EXTRACT(DATE FROM transaction_datetime)                     AS transaction_date,
         transaction_type,
-        CASE WHEN transaction_amount >= 0 THEN "IN" ELSE "OUT" END flow_direction,
-        NULLIF(src_ofi.fi_name, "") src_fi,
-        NULLIF(src_product_code, "") src_product_code,
-        NULLIF(src_sub_product_code, "") src_sub_product_code,
-        NULLIF(src_marketing_code, "") src_marketing_code,
-        NULLIF(src_ofi.interest_rate, "") src_interest_rate,
-        NULLIF(src_term, "") src_term,
-        NULLIF(dst_ofi.fi_name, "") dst_fi,
-        NULLIF(dst_product_code, "") dst_product_code,
-        NULLIF(dst_sub_product_code, "") dst_sub_product_code,
-        NULLIF(dst_marketing_code, "") dst_marketing_code,
-        NULLIF(dst_ofi.interest_rate, "") dst_interest_rate,
-        NULLIF(dst_term, "") dst_term,
+        CASE WHEN transaction_amount >= 0 THEN "IN" ELSE "OUT" END  AS flow_direction,
+        NULLIF(src_ofi.fi_name, "")                                 AS src_fi,
+        NULLIF(src_product_code, "")                                AS src_product_code,
+        NULLIF(src_sub_product_code, "")                            AS src_sub_product_code,
+        NULLIF(src_marketing_code, "")                              AS src_marketing_code,
+        NULLIF(src_ofi.interest_rate, "")                           AS src_interest_rate,
+        NULLIF(src_term, "")                                        AS src_term,
+        NULLIF(dst_ofi.fi_name, "")                                 AS dst_fi,
+        NULLIF(dst_product_code, "")                                AS dst_product_code,
+        NULLIF(dst_sub_product_code, "")                            AS dst_sub_product_code,
+        NULLIF(dst_marketing_code, "")                              AS dst_marketing_code,
+        NULLIF(dst_ofi.interest_rate, "")                           AS dst_interest_rate,
+        NULLIF(dst_term, "")                                        AS dst_term,
         transaction_amount,
         all_retail_mfi_flag
     FROM {{ ref("all_transaction") }} twb
     LEFT JOIN stg_deposit_account_customer dac ON twb.src_account_number = dac.account_number
-     AND twb.src_product_code = dac.product_code AND twb.src_sub_product_code = dac.sub_product_code
+        AND twb.src_product_code = dac.product_code 
+        AND twb.src_sub_product_code = dac.sub_product_code
     LEFT JOIN stg_bsb_fi_interest_rate src_ofi ON twb.src_bsb_number = src_ofi.bsb_number
     LEFT JOIN stg_bsb_fi_interest_rate dst_ofi ON twb.dst_bsb_number = dst_ofi.bsb_number
 ),
@@ -112,11 +113,11 @@ SELECT
     || "|" || TRIM(IFNULL(dst_term, ""))
     || "|" || TRIM(IFNULL(all_retail_mfi_flag, ""))
     || "|" || TRIM(IFNULL(transaction_type, ""))
-    ) row_key,
+    ) AS row_key,
     SHA256(
     CAST(transaction_amount AS STRING)
     || "|" || CAST(transaction_count AS STRING)
-    ) hash_diff,
+    ) AS hash_diff,
     transaction_date,
     flow_direction,
     src_fi,

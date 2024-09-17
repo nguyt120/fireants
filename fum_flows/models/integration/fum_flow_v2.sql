@@ -75,5 +75,5 @@ WITH
 {% endif %}
 
 SELECT *,
-    CURRENT_TIMESTAMP() _insert_time
+    CURRENT_TIMESTAMP() AS _insert_time
 FROM insert_records
