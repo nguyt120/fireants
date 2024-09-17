@@ -49,12 +49,16 @@ fum_flow_whole_bank_not_aggregated AS (
         transaction_type,
         CASE WHEN transaction_amount >= 0 THEN "IN" ELSE "OUT" END  AS flow_direction,
         NULLIF(src_ofi.fi_name, "")                                 AS src_fi,
+        NULLIF(src_portfolio, "")                                   AS src_portfolio,
+        NULLIF(src_product_group, "")                               AS src_product_group,
         NULLIF(src_product_code, "")                                AS src_product_code,
         NULLIF(src_sub_product_code, "")                            AS src_sub_product_code,
         NULLIF(src_marketing_code, "")                              AS src_marketing_code,
         NULLIF(src_ofi.interest_rate, "")                           AS src_interest_rate,
         NULLIF(src_term, "")                                        AS src_term,
         NULLIF(dst_ofi.fi_name, "")                                 AS dst_fi,
+        NULLIF(dst_portfolio, "")                                   AS dst_portfolio,
+        NULLIF(dst_product_group, "")                               AS dst_product_group,
         NULLIF(dst_product_code, "")                                AS dst_product_code,
         NULLIF(dst_sub_product_code, "")                            AS dst_sub_product_code,
         NULLIF(dst_marketing_code, "")                              AS dst_marketing_code,
@@ -76,12 +80,16 @@ fum_flow_whole_bank_aggregated AS (
         transaction_date,
         flow_direction,
         src_fi,
+        src_portfolio,
+        src_product_group,
         src_product_code,
         src_sub_product_code,
         src_marketing_code,
         src_interest_rate,
         src_term,
         dst_fi,
+        dst_portfolio,
+        dst_product_group,
         dst_product_code,
         dst_sub_product_code,
         dst_marketing_code,
@@ -92,7 +100,7 @@ fum_flow_whole_bank_aggregated AS (
         SUM(transaction_amount) transaction_amount,
         COUNT(1) transaction_count,
     FROM fum_flow_whole_bank_not_aggregated
-    GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+    GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
 )
 
 SELECT
@@ -100,12 +108,16 @@ SELECT
     CAST(transaction_date AS STRING)
     || "|" || flow_direction
     || "|" || UPPER(TRIM(IFNULL(src_fi, "")))
+    || "|" || UPPER(TRIM(IFNULL(src_portfolio, "")))
+    || "|" || UPPER(TRIM(IFNULL(src_product_group, "")))
     || "|" || TRIM(IFNULL(src_product_code, ""))
     || "|" || TRIM(IFNULL(src_sub_product_code, ""))
     || "|" || TRIM(IFNULL(src_marketing_code, ""))
     || "|" || TRIM(IFNULL(src_interest_rate, ""))
     || "|" || TRIM(IFNULL(src_term, ""))
     || "|" || UPPER(TRIM(IFNULL(dst_fi, "")))
+    || "|" || UPPER(TRIM(IFNULL(dst_portfolio, "")))
+    || "|" || UPPER(TRIM(IFNULL(dst_product_group, "")))
     || "|" || TRIM(IFNULL(dst_product_code, ""))
     || "|" || TRIM(IFNULL(dst_sub_product_code, ""))
     || "|" || TRIM(IFNULL(dst_marketing_code, ""))
@@ -121,12 +133,16 @@ SELECT
     transaction_date,
     flow_direction,
     src_fi,
+    src_portfolio,
+    src_product_group,
     src_product_code,
     src_sub_product_code,
     src_marketing_code,
     src_interest_rate,
     src_term,
     dst_fi,
+    dst_portfolio,
+    dst_product_group,
     dst_product_code,
     dst_sub_product_code,
     dst_marketing_code,
