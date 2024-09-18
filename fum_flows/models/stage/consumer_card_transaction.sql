@@ -2,41 +2,41 @@ WITH
 comsumer_card_transaction AS (
   -- ATGT tables
   SELECT *
-  FROM `anz-data-dgcp-prd-6443dd.T1_VPS_AUS_CFDL_VW.VPS_AU_ATGT_S1_CFDL_VW`
+  FROM {{ source("T1_VPS_AUS_CFDL_VW","VPS_AU_ATGT_S1_CFDL_VW") }}
   UNION ALL
   SELECT *
-  FROM `anz-data-dgcp-prd-6443dd.T1_VPS_AUS_CFDL_VW.VPS_AU_ATGT_S2_CFDL_VW`
+  FROM {{ source("T1_VPS_AUS_CFDL_VW","VPS_AU_ATGT_S2_CFDL_VW") }}
   UNION ALL
   SELECT *
-  FROM `anz-data-dgcp-prd-6443dd.T1_VPS_AUS_CFDL_VW.VPS_AU_ATGT_S3_CFDL_VW`
+  FROM {{ source("T1_VPS_AUS_CFDL_VW","VPS_AU_ATGT_S3_CFDL_VW") }}
   UNION ALL
   SELECT *
-  FROM `anz-data-dgcp-prd-6443dd.T1_VPS_AUS_CFDL_VW.VPS_AU_ATGT_S4_CFDL_VW`
+  FROM {{ source("T1_VPS_AUS_CFDL_VW","VPS_AU_ATGT_S4_CFDL_VW") }}
   UNION ALL
   SELECT *
-  FROM `anz-data-dgcp-prd-6443dd.T1_VPS_AUS_CFDL_VW.VPS_AU_ATGT_S5_CFDL_VW`
+  FROM {{ source("T1_VPS_AUS_CFDL_VW","VPS_AU_ATGT_S5_CFDL_VW") }}
   UNION ALL
   SELECT *
-  FROM `anz-data-dgcp-prd-6443dd.T1_VPS_AUS_CFDL_VW.VPS_AU_ATGT_S6_CFDL_VW`
+  FROM {{ source("T1_VPS_AUS_CFDL_VW","VPS_AU_ATGT_S6_CFDL_VW") }}
   UNION ALL
   -- ATPT tables
   SELECT *
-  FROM `anz-data-dgcp-prd-6443dd.T1_VPS_AUS_CFDL_VW.VPS_AU_ATPT_S1_CFDL_VW`
+  FROM {{ source("T1_VPS_AUS_CFDL_VW","VPS_AU_ATPT_S1_CFDL_VW") }}
   UNION ALL
   SELECT *
-  FROM `anz-data-dgcp-prd-6443dd.T1_VPS_AUS_CFDL_VW.VPS_AU_ATPT_S2_CFDL_VW`
+  FROM {{ source("T1_VPS_AUS_CFDL_VW","VPS_AU_ATPT_S2_CFDL_VW") }}
   UNION ALL
   SELECT *
-  FROM `anz-data-dgcp-prd-6443dd.T1_VPS_AUS_CFDL_VW.VPS_AU_ATPT_S3_CFDL_VW`
+  FROM {{ source("T1_VPS_AUS_CFDL_VW","VPS_AU_ATPT_S3_CFDL_VW") }}
   UNION ALL
   SELECT *
-  FROM `anz-data-dgcp-prd-6443dd.T1_VPS_AUS_CFDL_VW.VPS_AU_ATPT_S4_CFDL_VW`
+  FROM {{ source("T1_VPS_AUS_CFDL_VW","VPS_AU_ATPT_S4_CFDL_VW") }}
   UNION ALL
   SELECT *
-  FROM `anz-data-dgcp-prd-6443dd.T1_VPS_AUS_CFDL_VW.VPS_AU_ATPT_S5_CFDL_VW`
+  FROM {{ source("T1_VPS_AUS_CFDL_VW","VPS_AU_ATPT_S5_CFDL_VW") }}
   UNION ALL
   SELECT *
-  FROM `anz-data-dgcp-prd-6443dd.T1_VPS_AUS_CFDL_VW.VPS_AU_ATPT_S6_CFDL_VW`
+  FROM {{ source("T1_VPS_AUS_CFDL_VW","VPS_AU_ATPT_S6_CFDL_VW") }}
 ),
 cc_tranx_mapping AS (
   SELECT
@@ -46,7 +46,7 @@ cc_tranx_mapping AS (
     'Consumer_Cards'        AS transaction_src,
     src.atgt_mt_type        AS transaction_type,
     CAST(NULL AS STRING)    AS transaction_status,
-    CAST(NULL AS STRING)    AS src_account_number,
+    src.atgt_acct           AS src_account_number,
     CAST(NULL AS STRING)    AS src_bsb_number,
     rm.portfolio            AS src_portfolio,
     rm.product_group        AS src_product_group,
@@ -67,7 +67,7 @@ cc_tranx_mapping AS (
       WHEN 'C' THEN -1 * atgt_mt_amount / 100
     END                     AS transaction_amount, --from cents unit
   FROM comsumer_card_transaction AS src
-  INNER JOIN {{ ref("reg_data_mapping") }} AS rm
+  LEFT JOIN {{ ref("reg_data_mapping") }} AS rm
     ON rm.product_group = "Consumer_Cards"
     AND src.atgt_org = rm.product_code
     AND CAST(src.atgt_logo AS STRING) = rm.sub_product_code
@@ -76,4 +76,3 @@ cc_tranx_mapping AS (
     AND atgt_mt_type IN ('D', 'C')
 )
 SELECT * FROM cc_tranx_mapping
-
