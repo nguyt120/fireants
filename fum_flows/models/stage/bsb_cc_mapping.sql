@@ -12,7 +12,8 @@ dda_acc AS (
     'DDA'                       AS acc_type
   FROM {{ source("T1_CAP_AUS_CFDL_VW", "HFRTDDAD_CFDL_VW") }}
   WHERE x783679_prdct_code = 'DDA'
-    AND x783679_act_status IN ('03', '99')
+    -- AND x783679_act_status IN ('03', '99')
+    AND __instance_id >= CURRENT_DATE() - 90
 ),
 
 cda_acc AS (
@@ -29,7 +30,8 @@ cda_acc AS (
   FROM {{ source("T1_CAP_AUS_CFDL_VW", "CAP_AU_HFRTDA_CFDL_VW") }}
   WHERE 1 = 1
     AND x783652_prdct_code = 'CDA'
-    AND x783652_act_status IN ('01', '03', '99')
+    -- AND x783652_act_status IN ('01', '03', '99')
+    AND __instance_id >= CURRENT_DATE() - 90
 ),
 
 hl_acc AS (
@@ -46,7 +48,8 @@ hl_acc AS (
   FROM {{ source("T1_CAP_AUS_CFDL_VW", "HFRLOANA_CFDL_VW") }}
   WHERE 1 = 1
     AND x711667_product_code = 'ILS'
-    AND x711667_loan_status IS NULL
+    -- AND x711667_loan_status IS NULL
+    AND __instance_id >= CURRENT_DATE() - 90
 )
 
 SELECT * FROM dda_acc

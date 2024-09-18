@@ -17,6 +17,7 @@ DF_Plus AS (
         COALESCE(transfer_destination_account_bsb, payment_other_entity_account_bsb)        AS dst_bsb_number,
         transaction_amount
     FROM {{ source("dragonfish_transaction_v1", "transaction_anz_plus") }}
+    where date(transaction_datetime) >= CURRENT_DATE() - 90
 ),
 
 DF_Classic AS (
@@ -37,6 +38,7 @@ DF_Classic AS (
         COALESCE(transfer_destination_account_bsb, payment_other_entity_account_bsb)        AS dst_bsb_number,
         transaction_amount
     FROM {{ source("dragonfish_transaction_v1", "transaction_anz_classic") }}
+    where date(transaction_datetime) >= CURRENT_DATE() - 90
 ),
 
 DF_Classic_Mapping AS (
