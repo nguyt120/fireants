@@ -1,3 +1,4 @@
+-- ref: https://confluence.service.anz/display/ABT/Researching+Fum-Flow+logic
 WITH
 raw AS (
   SELECT 
