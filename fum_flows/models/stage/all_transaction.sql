@@ -83,3 +83,6 @@ SELECT * FROM no_mapping_transaction
 -- add term deposit transactions
 UNION ALL
 SELECT * FROM {{ ref("td_transaction") }}
+UNION ALL
+SELECT * FROM {{ ref("consumer_card_transaction") }}
+
