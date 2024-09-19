@@ -44,8 +44,8 @@ td_tranx_mapping AS (
         AND SUBSTR(src.account_number, -9) = ccm_td.account_number 
         AND CAST(src.bsb_number AS NUMERIC) = ccm_td.bsb
         AND src.sub_product_code = ccm_td.sub_product_code
-        AND src.transaction_datetime >= ccm_td.effective_from_datetime
-        AND src.transaction_datetime <= ccm_td.effective_to_datetime
+        AND CAST(src.transaction_datetime AS DATETIME) >= ccm_td.effective_from_datetime
+        AND CAST(src.transaction_datetime AS DATETIME) <= ccm_td.effective_to_datetime
     -- Get portfolio and product_group
     LEFT JOIN {{ ref("reg_data_mapping") }} AS rm_td 
         ON  src.product_code = rm_td.product_code

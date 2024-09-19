@@ -10,12 +10,16 @@ SELECT
     transaction_date
     ,flow_direction
     ,IFNULL(src_fi, "N/A") src_fi
+    ,IFNULL(src_portfolio, "N/A") src_portfolio
+    ,IFNULL(src_product_group, "N/A") src_product_group
     ,IFNULL(src_product_code, "N/A") src_product_code
     ,IFNULL(src_sub_product_code, "N/A") src_sub_product_code
     ,IFNULL(src_marketing_code, "N/A") src_marketing_code
     ,IFNULL(src_interest_rate, "N/A") src_interest_rate
     ,IFNULL(src_term, "N/A") src_term
     ,IFNULL(dst_fi, "N/A") dst_fi
+    ,IFNULL(dst_portfolio, "N/A") dst_portfolio
+    ,IFNULL(dst_product_group, "N/A") dst_product_group
     ,IFNULL(dst_product_code, "N/A") dst_product_code
     ,IFNULL(dst_sub_product_code, "N/A") dst_sub_product_code
     ,IFNULL(dst_marketing_code, "N/A") dst_marketing_code

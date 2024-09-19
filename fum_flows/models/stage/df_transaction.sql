@@ -17,6 +17,7 @@ df_plus AS (
         COALESCE(transfer_destination_account_bsb, payment_other_entity_account_bsb)        AS dst_bsb_number,
         transaction_amount
     FROM {{ source("dragonfish_transaction_v1", "transaction_anz_plus") }}
+    WHERE transaction_datetime > DATE_SUB(DATE_TRUNC(CURRENT_TIMESTAMP(), DAY), INTERVAL 180 DAY)
 ),
 
 df_classic AS (
@@ -37,6 +38,7 @@ df_classic AS (
         COALESCE(transfer_destination_account_bsb, payment_other_entity_account_bsb)        AS dst_bsb_number,
         transaction_amount
     FROM {{ source("dragonfish_transaction_v1", "transaction_anz_classic") }}
+    WHERE transaction_datetime > DATE_SUB(DATE_TRUNC(CURRENT_TIMESTAMP(), DAY), INTERVAL 180 DAY)
 ),
 
 df_classic_mapping AS (
@@ -65,8 +67,8 @@ df_classic_mapping AS (
         AND RIGHT(src.src_account_number,9) = ccm_cl.account_number 
         AND CAST(RIGHT(src.src_bsb_number,4) AS NUMERIC) = ccm_cl.bsb 
         AND src.src_sub_product_code = ccm_cl.sub_product_code
-        AND src.transaction_datetime >= ccm_cl.effective_from_datetime
-        AND src.transaction_datetime <= ccm_cl.effective_to_datetime
+        AND CAST(src.transaction_datetime AS DATETIME) >= ccm_cl.effective_from_datetime
+        AND CAST(src.transaction_datetime AS DATETIME) <= ccm_cl.effective_to_datetime
     -- Get portfolio and product_group
     LEFT JOIN {{ ref("reg_data_mapping") }} AS rm_cl 
         ON src.src_product_code = rm_cl.product_code
