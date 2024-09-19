@@ -62,7 +62,6 @@ sources:
       - name: CAPIDSAU_BTRCDA_01_CFDL_VW
       - name: CAP_AU_HFRTDA_CFDL_VW
       - name: HFRTDDAD_CFDL_VW
-<<<<<<< HEAD
       - name: HFRLOANA_CFDL_VW
     schema: T1_VPS_AUS_CFDL_VW
     tables:
@@ -78,6 +77,3 @@ sources:
       - name: VPS_AU_ATPT_S4_CFDL_VW
       - name: VPS_AU_ATPT_S5_CFDL_VW
       - name: VPS_AU_ATPT_S6_CFDL_VW
-=======
-      - name: HFRLOANA_CFDL_VW
->>>>>>> main
