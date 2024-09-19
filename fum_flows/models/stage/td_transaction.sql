@@ -1,4 +1,5 @@
-WITH TD_Tranx AS (
+WITH 
+td_tranx AS (
     SELECT
         PARSE_TIMESTAMP('%Y%m%d', CAST(TXN_POST_DATE AS STRING))    AS transaction_datetime,
         CASE TRAN_TYPE  WHEN 'C' THEN 'TD_CREDIT' 
@@ -11,7 +12,7 @@ WITH TD_Tranx AS (
     FROM {{ source("T1_CAP_AUS_CFDL_VW", "CAPIDSAU_BTRCDA_01_CFDL_VW") }}
     WHERE dl__rec_eff_to_ts = TIMESTAMP('9999-12-31 00:00:00 UTC')
 ),
-TD_Tranx_Mapping AS (
+td_tranx_mapping AS (
     SELECT
         src.transaction_datetime
         , CAST(NULL AS STRING)   AS	transaction_id
@@ -36,15 +37,20 @@ TD_Tranx_Mapping AS (
         , CAST(NULL AS STRING)	 AS dst_marketing_code
         , CAST(NULL AS STRING)	 AS dst_term
         , src.transaction_amount
-    FROM TD_Tranx src
-    LEFT JOIN {{ ref("bsb_cc_mapping") }} ccm_td ON acc_type = 'CDA'
-                                            AND SUBSTR(src.account_number, -9) = ccm_td.account_number 
-                                            AND cast(src.bsb_number AS NUMERIC) = ccm_td.bsb
-                                            AND src.product_code = ccm_td.sub_product_code
-                                            AND CAST(src.transaction_datetime AS DATETIME) >= ccm_td.dl__src_eff_from_dttm
-                                            AND CAST(src.transaction_datetime AS DATETIME) <= ccm_td.dl__src_eff_to_dttm 
-    LEFT JOIN {{ ref("reg_data_mapping") }} rm_td ON  src.product_code = rm_td.product_code
-                                            AND  src.sub_product_code = rm_td.sub_product_code
-                                            AND cast(ccm_td.cost_centre as string) = rm_td.cost_centre
+    FROM td_tranx AS src
+    -- Get cost_centre
+    LEFT JOIN {{ ref("bsb_cc_mapping") }} AS ccm_td 
+        ON acc_type = 'CDA'
+        AND SUBSTR(src.account_number, -9) = ccm_td.account_number 
+        AND CAST(src.bsb_number AS NUMERIC) = ccm_td.bsb
+        AND src.sub_product_code = ccm_td.sub_product_code
+        AND src.transaction_datetime >= ccm_td.effective_from_datetime
+        AND src.transaction_datetime <= ccm_td.effective_to_datetime
+    -- Get portfolio and product_group
+    LEFT JOIN {{ ref("reg_data_mapping") }} AS rm_td 
+        ON  src.product_code = rm_td.product_code
+        AND src.sub_product_code = rm_td.sub_product_code
+        AND CAST(ccm_td.cost_centre as string) = rm_td.cost_centre
 )
-SELECT * FROM TD_Tranx_Mapping
+
+SELECT * FROM td_tranx_mapping

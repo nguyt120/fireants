@@ -12,7 +12,7 @@ dda_acc AS (
     'DDA'                       AS acc_type
   FROM {{ source("T1_CAP_AUS_CFDL_VW", "HFRTDDAD_CFDL_VW") }}
   WHERE x783679_prdct_code = 'DDA'
-    -- AND x783679_act_status IN ('03', '99')
+  -- AND x783679_act_status IN ('03', '99')
     AND __instance_id >= CURRENT_DATE() - 90
 ),
 
@@ -28,8 +28,7 @@ cda_acc AS (
     dl__src_eff_to_dttm,
     'CDA'                       AS acc_type
   FROM {{ source("T1_CAP_AUS_CFDL_VW", "CAP_AU_HFRTDA_CFDL_VW") }}
-  WHERE 1 = 1
-    AND x783652_prdct_code = 'CDA'
+  WHERE x783652_prdct_code = 'CDA'
     -- AND x783652_act_status IN ('01', '03', '99')
     AND __instance_id >= CURRENT_DATE() - 90
 ),
@@ -46,14 +45,32 @@ hl_acc AS (
     dl__src_eff_to_dttm,
     'HL'                                          AS acc_type
   FROM {{ source("T1_CAP_AUS_CFDL_VW", "HFRLOANA_CFDL_VW") }}
-  WHERE 1 = 1
-    AND x711667_product_code = 'ILS'
-    -- AND x711667_loan_status IS NULL
+  WHERE x711667_product_code = 'ILS'
+  -- AND x711667_loan_status IS NULL
     AND __instance_id >= CURRENT_DATE() - 90
+),
+
+all_acc AS (
+  SELECT * FROM dda_acc
+  UNION ALL
+  SELECT * FROM cda_acc
+  UNION ALL
+  SELECT * FROM hl_acc
+),
+
+final AS (
+  SELECT 
+    account_number, 
+    bsb,
+    acc_type,
+    sub_product_code, 
+    cost_centre, 
+    MIN(dl__src_eff_from_dttm)  AS effective_from_datetime, 
+    MAX(dl__src_eff_to_dttm)    AS effective_to_datetime
+  FROM all_acc
+  GROUP BY 1, 2, 3, 4, 5
 )
 
-SELECT * FROM dda_acc
-UNION ALL
-SELECT * FROM cda_acc
-UNION ALL
-SELECT * FROM hl_acc
+SELECT * FROM final
+
+
