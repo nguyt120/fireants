@@ -8,7 +8,7 @@ raw AS (
     retail_mapping,
     commercial_mapping,
     psgl_product_code psgl_code,
-    LEFT(CAST(profit_centre AS string),4) AS cost_center,
+    LEFT(CAST(profit_centre AS string),4) AS cost_centre,
     IF(psgl_product_code="V2PLUS","DDA",deal_type) AS product_code,
     IF(psgl_product_code="V2PLUS","V2",deal_subtype) AS sub_product_code
   FROM  {{ ref("seed_reg_data_mapping") }}
@@ -28,7 +28,7 @@ retail_deposit_td_portfolio_td_retail AS (
     AND retail_mapping = "TD Portfolio" 
     AND bu = "Banking Prod"
     AND psgl_code = "TD0003"
-    AND cost_center NOT IN ("3023", "3798")
+    AND cost_centre NOT IN ("3023", "3798")
 ),
 retail_deposit_td_portfolio_retail AS (
   SELECT 
@@ -43,7 +43,7 @@ retail_deposit_td_portfolio_retail AS (
     AND retail_mapping = "TD Portfolio" 
     AND bu = "Banking Prod"
     AND psgl_code = "TD0001"
-    AND cost_center NOT IN ("3023", "3798")
+    AND cost_centre NOT IN ("3023", "3798")
 ),
 retail_deposit_td_portfolio_tpd AS (
   SELECT 
@@ -58,7 +58,7 @@ retail_deposit_td_portfolio_tpd AS (
     AND retail_mapping = "TD Portfolio" 
     AND bu = "Banking Prod"
     AND psgl_code IN ("TD0001", "TD0003")
-    AND cost_center IN ("3023", "3798")
+    AND cost_centre IN ("3023", "3798")
 ),
 
 --retail_deposit_savings_portfolio
