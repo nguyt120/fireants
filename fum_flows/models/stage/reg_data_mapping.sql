@@ -213,7 +213,7 @@ com_lending AS (
 -- Commercial Products
 com_prod AS (
   SELECT 
-    "" AS v0,
+    "Others" AS v0,
     "Commercial Products" AS portfolio,
     commercial_mapping AS product_group,
     * EXCEPT(retail_mapping, commercial_mapping, psgl_code)
@@ -228,7 +228,7 @@ com_prod AS (
 -- Private Bank and Advice Products
 PBAP AS (
   SELECT 
-    "" AS v0,
+    "Others" AS v0,
     "Private Bank and Advice Products" AS portfolio,
     commercial_mapping AS product_group,
     * EXCEPT(retail_mapping, commercial_mapping, psgl_code)
