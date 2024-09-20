@@ -12,81 +12,6 @@
 }}
 
 WITH
--- Prepare transaction data
-raw_transaction AS (
-    SELECT * FROM {{ ref("DragonFish_Transaction") }}
-),
-
-valid_two_legs_puids AS (
-    SELECT DISTINCT transaction_puid, COUNT(transaction_puid) leg_count
-    FROM raw_transaction
-    WHERE dst_account_number IS NOT NULL
-    GROUP BY transaction_puid
-    HAVING leg_count = 2
-),
-
-mapping_transaction AS (
-    SELECT
-        org.transaction_date
-        ,org.transaction_id
-        ,org.transaction_puid
-        ,org.transaction_src
-        ,org.transaction_type
-        ,org.transaction_status
-        ,org.src_account_number
-        ,org.src_bsb_number
-        ,org.src_product_code
-        ,org.src_sub_product_code
-        ,org.src_marketing_code
-        ,org.src_term
-        ,map.src_account_number dst_account_number
-        ,map.src_bsb_number	dst_bsb_number
-        ,map.src_product_code	dst_product_code
-        ,map.src_sub_product_code	dst_sub_product_code
-        ,map.src_marketing_code dst_marketing_code
-        ,map.src_term dst_term
-        ,org.transaction_amount
-    FROM raw_transaction org
-    INNER JOIN raw_transaction map USING (transaction_puid)
-    WHERE org.transaction_puid IN (SELECT transaction_puid FROM valid_two_legs_puids)
-    AND org.src_account_number != map.src_account_number
-),
-
-no_mapping_transaction AS (
-    SELECT
-        transaction_date
-        ,transaction_id
-        ,transaction_puid
-        ,transaction_src
-        ,transaction_type
-        ,transaction_status
-        ,src_account_number
-        ,src_bsb_number
-        ,src_product_code
-        ,src_sub_product_code
-        ,src_marketing_code
-        ,src_term
-        ,dst_account_number
-        ,dst_bsb_number
-        ,CAST(NULL AS STRING)	dst_product_code
-        ,CAST(NULL AS STRING)	dst_sub_product_code
-        ,CAST(NULL AS STRING)	dst_marketing_code
-        ,CAST(NULL AS STRING)	dst_term
-        ,transaction_amount
-    FROM raw_transaction
-    -- Since transaction_id can be duplicated between classic and plus
-    WHERE CONCAT(transaction_id, transaction_src) NOT IN (SELECT CONCAT(transaction_id, transaction_src) FROM mapping_transaction)
-),
-
-stg_transaction_whole_bank AS (
-    SELECT * FROM mapping_transaction
-    UNION ALL
-    SELECT * FROM no_mapping_transaction
-    -- add term deposit transactions
-    UNION ALL
-    SELECT * FROM {{ ref("TermDeposit_Transaction") }}
-),
-
 -- Prepare customer & account data
 raw_deposit_account_customer AS (
     SELECT
@@ -132,26 +57,27 @@ stg_bsb_fi_interest_rate AS (
 -- Joining together for aggregation, apply some clean-up pre aggregation
 fum_flow_whole_bank_not_aggregated AS (
     SELECT
-        transaction_date,
+        EXTRACT(DATE FROM transaction_datetime)                     AS transaction_date,
         transaction_type,
-        CASE WHEN transaction_amount >= 0 THEN "IN" ELSE "OUT" END flow_direction,
-        NULLIF(src_ofi.fi_name, "") src_fi,
-        NULLIF(src_product_code, "") src_product_code,
-        NULLIF(src_sub_product_code, "") src_sub_product_code,
-        NULLIF(src_marketing_code, "") src_marketing_code,
-        NULLIF(src_ofi.interest_rate, "") src_interest_rate,
-        NULLIF(src_term, "") src_term,
-        NULLIF(dst_ofi.fi_name, "") dst_fi,
-        NULLIF(dst_product_code, "") dst_product_code,
-        NULLIF(dst_sub_product_code, "") dst_sub_product_code,
-        NULLIF(dst_marketing_code, "") dst_marketing_code,
-        NULLIF(dst_ofi.interest_rate, "") dst_interest_rate,
-        NULLIF(dst_term, "") dst_term,
+        CASE WHEN transaction_amount >= 0 THEN "IN" ELSE "OUT" END  AS flow_direction,
+        NULLIF(src_ofi.fi_name, "")                                 AS src_fi,
+        NULLIF(src_product_code, "")                                AS src_product_code,
+        NULLIF(src_sub_product_code, "")                            AS src_sub_product_code,
+        NULLIF(src_marketing_code, "")                              AS src_marketing_code,
+        NULLIF(src_ofi.interest_rate, "")                           AS src_interest_rate,
+        NULLIF(src_term, "")                                        AS src_term,
+        NULLIF(dst_ofi.fi_name, "")                                 AS dst_fi,
+        NULLIF(dst_product_code, "")                                AS dst_product_code,
+        NULLIF(dst_sub_product_code, "")                            AS dst_sub_product_code,
+        NULLIF(dst_marketing_code, "")                              AS dst_marketing_code,
+        NULLIF(dst_ofi.interest_rate, "")                           AS dst_interest_rate,
+        NULLIF(dst_term, "")                                        AS dst_term,
         transaction_amount,
         all_retail_mfi_flag
-    FROM stg_transaction_whole_bank twb
+    FROM {{ ref("all_transaction") }} twb
     JOIN stg_deposit_account_customer dac ON twb.src_account_number = dac.account_number
-     AND twb.src_product_code = dac.product_code AND twb.src_sub_product_code = dac.sub_product_code
+        AND twb.src_product_code = dac.product_code 
+        AND twb.src_sub_product_code = dac.sub_product_code
     JOIN stg_bsb_fi_interest_rate src_ofi ON twb.src_bsb_number = src_ofi.bsb_number
     JOIN stg_bsb_fi_interest_rate dst_ofi ON twb.dst_bsb_number = dst_ofi.bsb_number
 ),
@@ -173,35 +99,35 @@ fum_flow_whole_bank_aggregated AS (
         dst_marketing_code,
         dst_interest_rate,
         dst_term,
-        SUM(transaction_amount) total_amount,
-        SUM(IF(all_retail_mfi_flag = "Y", 1, 0)) mfi_transaction_count,
-        SUM(IF(all_retail_mfi_flag = "Y", transaction_amount, 0)) mfi_transaction_amount,
-        SUM(IF(transaction_type = "DIRECT_DEBIT", 1, 0)) direct_debit_transaction_count,
-        SUM(IF(transaction_type = "DIRECT_DEBIT", transaction_amount, 0)) direct_debit_transaction_amount,
-        SUM(IF(transaction_type = "BPAY", 1, 0)) bpay_transaction_count,
-        SUM(IF(transaction_type = "BPAY", transaction_amount, 0)) bpay_transaction_amount,
-        SUM(IF(transaction_type = "SALARY", 1, 0)) salary_transaction_count,
-        SUM(IF(transaction_type = "SALARY", transaction_amount, 0)) salary_transaction_amount,
-        SUM(IF(transaction_type = "TRANSFER", 1, 0)) transfer_transaction_count,
-        SUM(IF(transaction_type = "TRANSFER", transaction_amount, 0)) transfer_transaction_amount,
-        SUM(IF(transaction_type = "PAYMENT", 1, 0)) payment_transaction_count,
-        SUM(IF(transaction_type = "PAYMENT", transaction_amount, 0)) payment_transaction_amount,
-        SUM(IF(transaction_type = "BSB_ACC_NUM", 1, 0)) bsb_acc_num_transaction_count,
-        SUM(IF(transaction_type = "BSB_ACC_NUM", transaction_amount, 0)) bsb_acc_num_transaction_amount,
-        SUM(IF(transaction_type = "CARD", 1, 0)) card_transaction_count,
-        SUM(IF(transaction_type = "CARD", transaction_amount, 0)) card_transaction_amount,
-        SUM(IF(transaction_type = "FEE", 1, 0)) fee_transaction_count,
-        SUM(IF(transaction_type = "FEE", transaction_amount, 0)) fee_transaction_amount,
-        SUM(IF(transaction_type = "PAYID", 1, 0)) payid_transaction_count,
-        SUM(IF(transaction_type = "PAYID", transaction_amount, 0)) payid_transaction_amount,
-        SUM(IF(transaction_type = "INTEREST", 1, 0)) interest_transaction_count,
-        SUM(IF(transaction_type = "INTEREST", transaction_amount, 0)) interest_transaction_amount,
-        SUM(IF(transaction_type = "PAYTO", 1, 0)) payto_transaction_count,
-        SUM(IF(transaction_type = "PAYTO", transaction_amount, 0)) payto_transaction_amount,
-        SUM(IF(transaction_type = "DEPOSIT_WITHDRAWAL", 1, 0)) deposit_withdrawal_transaction_count,
-        SUM(IF(transaction_type = "DEPOSIT_WITHDRAWAL", transaction_amount, 0)) deposit_withdrawal_transaction_amount,
-        SUM(IF(transaction_type IS NULL, 1, 0)) unidentified_transaction_count,
-        SUM(IF(transaction_type IS NULL, transaction_amount, 0)) unidentified_transaction_amount,
+        SUM(transaction_amount)                                                 AS total_amount,
+        SUM(IF(all_retail_mfi_flag = "Y", 1, 0))                                AS mfi_transaction_count,
+        SUM(IF(all_retail_mfi_flag = "Y", transaction_amount, 0))               AS mfi_transaction_amount,
+        SUM(IF(transaction_type = "DIRECT_DEBIT", 1, 0))                        AS direct_debit_transaction_count,
+        SUM(IF(transaction_type = "DIRECT_DEBIT", transaction_amount, 0))       AS direct_debit_transaction_amount,
+        SUM(IF(transaction_type = "BPAY", 1, 0))                                AS bpay_transaction_count,
+        SUM(IF(transaction_type = "BPAY", transaction_amount, 0))               AS bpay_transaction_amount,
+        SUM(IF(transaction_type = "SALARY", 1, 0))                              AS salary_transaction_count,
+        SUM(IF(transaction_type = "SALARY", transaction_amount, 0))             AS salary_transaction_amount,
+        SUM(IF(transaction_type = "TRANSFER", 1, 0))                            AS transfer_transaction_count,
+        SUM(IF(transaction_type = "TRANSFER", transaction_amount, 0))           AS transfer_transaction_amount,
+        SUM(IF(transaction_type = "PAYMENT", 1, 0))                             AS payment_transaction_count,
+        SUM(IF(transaction_type = "PAYMENT", transaction_amount, 0))            AS payment_transaction_amount,
+        SUM(IF(transaction_type = "BSB_ACC_NUM", 1, 0))                         AS bsb_acc_num_transaction_count,
+        SUM(IF(transaction_type = "BSB_ACC_NUM", transaction_amount, 0))        AS bsb_acc_num_transaction_amount,
+        SUM(IF(transaction_type = "CARD", 1, 0))                                AS card_transaction_count,
+        SUM(IF(transaction_type = "CARD", transaction_amount, 0))               AS card_transaction_amount,
+        SUM(IF(transaction_type = "FEE", 1, 0))                                 AS fee_transaction_count,
+        SUM(IF(transaction_type = "FEE", transaction_amount, 0))                AS fee_transaction_amount,
+        SUM(IF(transaction_type = "PAYID", 1, 0))                               AS payid_transaction_count,
+        SUM(IF(transaction_type = "PAYID", transaction_amount, 0))              AS payid_transaction_amount,
+        SUM(IF(transaction_type = "INTEREST", 1, 0))                            AS interest_transaction_count,
+        SUM(IF(transaction_type = "INTEREST", transaction_amount, 0))           AS interest_transaction_amount,
+        SUM(IF(transaction_type = "PAYTO", 1, 0))                               AS payto_transaction_count,
+        SUM(IF(transaction_type = "PAYTO", transaction_amount, 0))              AS payto_transaction_amount,
+        SUM(IF(transaction_type = "DEPOSIT_WITHDRAWAL", 1, 0))                  AS deposit_withdrawal_transaction_count,
+        SUM(IF(transaction_type = "DEPOSIT_WITHDRAWAL", transaction_amount, 0)) AS deposit_withdrawal_transaction_amount,
+        SUM(IF(transaction_type IS NULL, 1, 0))                                 AS unidentified_transaction_count,
+        SUM(IF(transaction_type IS NULL, transaction_amount, 0))                AS unidentified_transaction_amount,
     FROM fum_flow_whole_bank_not_aggregated
     GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
 )
@@ -222,7 +148,7 @@ SELECT
     || "|" || TRIM(IFNULL(dst_marketing_code, ""))
     || "|" || TRIM(IFNULL(dst_interest_rate, ""))
     || "|" || TRIM(IFNULL(dst_term, ""))
-    ) row_key,
+    )                   AS row_key,
     SHA256(
     CAST(total_amount AS STRING)
     || "|" || CAST(mfi_transaction_count AS STRING)
@@ -253,7 +179,7 @@ SELECT
     || "|" || CAST(deposit_withdrawal_transaction_amount AS STRING)
     || "|" || CAST(unidentified_transaction_count AS STRING)
     || "|" || CAST(unidentified_transaction_amount AS STRING)
-    ) hash_diff,
+    )                   AS hash_diff,
     transaction_date,
     flow_direction,
     src_fi,
@@ -297,6 +223,6 @@ SELECT
     deposit_withdrawal_transaction_amount,
     unidentified_transaction_count,
     unidentified_transaction_amount,
-    CURRENT_TIMESTAMP() _insert_time,
-    CURRENT_TIMESTAMP() _update_time,
+    CURRENT_TIMESTAMP() AS _insert_time,
+    CURRENT_TIMESTAMP() AS _update_time,
 FROM fum_flow_whole_bank_aggregated

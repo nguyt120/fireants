@@ -41,6 +41,7 @@ sources:
     schema: sirius_reporting
     tables:
       - name: CUSTOMER_MFI_MONTHLY_SUMMARY
+      - name: ACCOUNT_CURRENT_VW
   
   - name: referencedata_anzx_rdm_entities_v1
     database: |
@@ -59,3 +60,26 @@ sources:
     schema: T1_CAP_AUS_CFDL_VW
     tables:
       - name: CAPIDSAU_BTRCDA_01_CFDL_VW
+      - name: CAP_AU_HFRTDA_CFDL_VW
+      - name: HFRTDDAD_CFDL_VW
+      - name: HFRLOANA_CFDL_VW
+
+  - name: T1_VPS_AUS_CFDL_VW
+    database: |
+      {%- if  target.name == "dev" -%} anz-data-dgcp-prd-6443dd
+      {%- else -%} invalid_database
+      {%- endif -%}
+    schema: T1_VPS_AUS_CFDL_VW
+    tables:
+      - name: VPS_AU_ATGT_S1_CFDL_VW
+      - name: VPS_AU_ATGT_S2_CFDL_VW
+      - name: VPS_AU_ATGT_S3_CFDL_VW
+      - name: VPS_AU_ATGT_S4_CFDL_VW
+      - name: VPS_AU_ATGT_S5_CFDL_VW
+      - name: VPS_AU_ATGT_S6_CFDL_VW
+      - name: VPS_AU_ATPT_S1_CFDL_VW
+      - name: VPS_AU_ATPT_S2_CFDL_VW
+      - name: VPS_AU_ATPT_S3_CFDL_VW
+      - name: VPS_AU_ATPT_S4_CFDL_VW
+      - name: VPS_AU_ATPT_S5_CFDL_VW
+      - name: VPS_AU_ATPT_S6_CFDL_VW

@@ -32,7 +32,7 @@ WITH
             AND _deleted_flg = 0
     ),
     source AS ( SELECT * FROM {{ snapshot_source }} ),
-    {# getting current records those are not exist in the source, so it is deleted #}
+    {#/* getting current records those are not exist in the source, so it is deleted */#}
     insert_deleted_records AS (
         SELECT * EXCEPT(_deleted_flg, _insert_time) FROM current_target
         WHERE NOT EXISTS
@@ -42,7 +42,7 @@ WITH
                 AND source.row_key = current_target.row_key
             )
     ),
-    {# getting records from source those are not exist in the current, so it is new #}
+    {#/* getting records from source those are not exist in the current, so it is new */#}
     insert_new_records AS (
         SELECT * FROM source
         WHERE NOT EXISTS
@@ -52,7 +52,7 @@ WITH
                 AND source.row_key = current_target.row_key
             )
     ),
-    {# getting records from source those are exist in the current, but it is updated #}
+    {#/* getting records from source those are exist in the current, but it is updated */#}
     insert_updated_records AS (
         SELECT * FROM source
         WHERE EXISTS
@@ -75,5 +75,5 @@ WITH
 {% endif %}
 
 SELECT *,
-    CURRENT_TIMESTAMP() _insert_time
+    CURRENT_TIMESTAMP() AS _insert_time
 FROM insert_records
