@@ -1,4 +1,4 @@
-import google.cloud.bigquery as bigquery
+import google.cloud.bigquery as bq
 import pandas as pd
 from datetime import date
 import os
@@ -8,13 +8,13 @@ dataset_list = [
     'pd_cosmos_analytics_fireant',
     'pd_cosmos_fireant_reporting'
 ]
-dataset_name = 'pd_cosmos_analytics_fireant'
+
 for dataset_name in dataset_list:
     dataset = f'{project_name}.{dataset_name}'
 
     df = pd.DataFrame(columns=['Project','Dataset','Table','Created', 'Modified', 'RowCount']) 
 
-    bq_client = bigquery.Client()
+    bq_client = bq.Client()
     tables = bq_client.list_tables(dataset=dataset)
 
     for table in tables:
