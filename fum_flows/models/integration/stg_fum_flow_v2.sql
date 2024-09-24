@@ -1,8 +1,6 @@
--- {{ config(materialized="view") }}
 {{
     config(
-        materialized="incremental",
-        incremental_strategy="merge",
+        materialized="table",
         partition_by={
             "field": "transaction_date",
             "data_type": "date",
@@ -10,6 +8,7 @@
         }
     )
 }}
+
 WITH
 -- Prepare customer & account data
 raw_deposit_account_customer AS (
