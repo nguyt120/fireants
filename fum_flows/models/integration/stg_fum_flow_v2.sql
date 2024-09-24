@@ -1,4 +1,14 @@
-{{ config(materialized="view") }}
+{{
+    config(
+        materialized="table",
+        partition_by={
+            "field": "transaction_date",
+            "data_type": "date",
+            "granularity": "day",
+        }
+    )
+}}
+
 WITH
 -- Prepare customer & account data
 raw_deposit_account_customer AS (

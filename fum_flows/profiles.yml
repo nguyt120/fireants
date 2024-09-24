@@ -2,7 +2,7 @@ fum_flows:
   outputs:
     dev:
       dataset: pd_cosmos
-      job_execution_timeout_seconds: 600
+      job_execution_timeout_seconds: 1800
       job_retries: 1
       location: australia-southeast1
       method: oauth
